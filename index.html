@@ -87,6 +87,7 @@
       </div>
       <div>
         <button type="submit">Login</button>
+        <button type="button" id="go-register" style="margin-top:8px;">Register</button>
       </div>
     </form>
     <div id="login-message"></div>
@@ -200,15 +201,22 @@
       e.preventDefault();
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
-      const user = users.find(u => u.username === username && u.password === password);
-      if (user) {
-        loginSection.style.display = 'none';
-        ticketSection.style.display = 'block';
-        loginMessage.textContent = '';
-        updateTotalPrice();
-      } else {
-        loginMessage.textContent = 'Invalid username or password.';
-      }
+      fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          window.location.href = '/ticket.html';
+        } else {
+          loginMessage.textContent = data.error || 'Invalid username or password.';
+        }
+      })
+      .catch(() => {
+        loginMessage.textContent = 'Login failed.';
+      });
     });
 
     ticketForm.addEventListener('submit', function(e) {
@@ -246,4 +254,30 @@
     updateTotalPrice();
   </script>
 </body>
+  <script>
+    document.getElementById('go-register').addEventListener('click', function() {
+      window.location.href = '/register.html';
+    });
+  </script>
+  <script>
+    document.getElementById('register-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const username = document.getElementById('register-username').value;
+      const password = document.getElementById('register-password').value;
+      const res = await fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      const msg = document.getElementById('register-message');
+      if (data.success) {
+        msg.style.color = '#080';
+        msg.textContent = 'Registration successful!';
+      } else {
+        msg.style.color = '#d00';
+        msg.textContent = data.error || 'Registration failed.';
+      }
+    });
+  </script>
 </html>

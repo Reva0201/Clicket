@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Choose Event</title>
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f7f7f7;
+      font-family: Arial, sans-serif;
+    }
+    .grid-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 24px;
+      width: 500px;
+      height: 400px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      padding: 32px;
+    }
+    .event-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: #e3eafc;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 1.2em;
+      font-weight: bold;
+      border: 2px solid #1976d2;
+    }
+    .event-block:hover {
+      background: #bbdefb;
+    }
+    .event-title {
+      margin-bottom: 8px;
+    }
+    .event-price {
+      font-size: 0.95em;
+      color: #1976d2;
+    }
+    #event-message {
+      text-align: center;
+      margin-top: 24px;
+      color: #1976d2;
+      font-weight: bold;
+    }
+    #back-login {
+      margin-top: 24px;
+      display: block;
+      width: 100%;
+      padding: 10px;
+      background: #e53935;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    #back-login:hover {
+      background: #b71c1c;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-container">
+    <div class="event-block" id="theater">
+      <div class="event-title">Theater</div>
+      <div class="event-price">Rp 750.000</div>
+    </div>
+    <div class="event-block" id="concert">
+      <div class="event-title">Concert</div>
+      <div class="event-price">Rp 1.000.000</div>
+    </div>
+    <div class="event-block" id="f1">
+      <div class="event-title">F1</div>
+      <div class="event-price">Rp 2.000.000</div>
+    </div>
+    <div class="event-block" id="vct">
+      <div class="event-title">VCT Valorant</div>
+      <div class="event-price">Rp 1.500.000</div>
+    </div>
+  </div>
+  <div id="event-message"></div>
+  <button id="back-login">Back to Login</button>
+  <script>
+    const eventPrices = {
+      theater: 750000,
+      concert: 1000000,
+      f1: 2000000,
+      vct: 1500000
+    };
+    const eventNames = {
+      theater: 'Theater',
+      concert: 'Concert',
+      f1: 'F1',
+      vct: 'VCT Valorant'
+    };
+    document.querySelectorAll('.event-block').forEach(block => {
+      block.onclick = function() {
+        const id = block.id;
+        window.location.href = `/ticket.html?event=${id}`;
+      };
+    });
+    document.getElementById('back-login').onclick = function() {
+      window.location.href = '/';
+    };
+  </script>
+</body>
+</html>

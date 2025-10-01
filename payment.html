@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Payment</title>
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f7f7f7;
+      font-family: Arial, sans-serif;
+    }
+    .center-container {
+      background: #fff;
+      padding: 32px 32px 24px 32px;
+      border-radius: 10px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      min-width: 320px;
+      max-width: 350px;
+      margin: 16px;
+    }
+    h2 {
+      text-align: center;
+      margin-top: 0;
+    }
+    form > div {
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      margin-bottom: 4px;
+    }
+    input, button {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px;
+      margin-top: 2px;
+    }
+    #payment-summary {
+      margin-bottom: 16px;
+      text-align: center;
+      font-weight: bold;
+      color: #1976d2;
+    }
+  </style>
+</head>
+<body>
+  <div class="center-container">
+    <h2>Payment</h2>
+    <div id="payment-summary"></div>
+    <form id="payment-form">
+      <div>
+        <label for="card">Card Number:</label>
+        <input type="text" id="card" required>
+      </div>
+      <div>
+        <label for="expiry">Expiry Date:</label>
+        <input type="text" id="expiry" required>
+      </div>
+      <div>
+        <label for="cvv">CVV:</label>
+        <input type="text" id="cvv" required>
+      </div>
+      <div>
+        <button type="submit">Pay</button>
+      </div>
+    </form>
+    <div id="payment-message"></div>
+    <button id="back-ticket" style="margin-top:12px;">Back to Ticket</button>
+  </div>
+  <script>
+    // Get query params for event and quantity
+    function getQueryParams() {
+      const params = {};
+      window.location.search.replace(/\??(?:([^=]+)=([^&]*)&?)/g, function(_, k, v) {
+        params[k] = decodeURIComponent(v);
+      });
+      return params;
+    }
+    const params = getQueryParams();
+    const eventNames = {
+      theater: 'Theater',
+      concert: 'Concert',
+      f1: 'F1',
+      vct: 'VCT Valorant'
+    };
+    const eventPrices = {
+      theater: 750000,
+      concert: 1000000,
+      f1: 2000000,
+      vct: 1500000
+    };
+    const event = params.event;
+    const quantity = parseInt(params.quantity, 10) || 1;
+    const total = eventPrices[event] * quantity;
+    document.getElementById('payment-summary').textContent = `You are buying ${quantity} ticket(s) for ${eventNames[event]}. Total price: Rp ${total.toLocaleString('id-ID')}`;
+    document.getElementById('payment-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      document.getElementById('payment-message').textContent = `Payment successful! You have purchased ${quantity} ticket(s) for ${eventNames[event]}. Please check your email for the ticket(s).`;
+      document.getElementById('payment-form').reset();
+    });
+    document.getElementById('back-ticket').onclick = function() {
+      window.location.href = `/ticket.html?event=${event}`;
+    };
+  </script>
+</body>
+</html>

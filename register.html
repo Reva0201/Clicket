@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register</title>
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f7f7f7;
+      font-family: Arial, sans-serif;
+    }
+    .center-container {
+      background: #fff;
+      padding: 32px 32px 24px 32px;
+      border-radius: 10px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      min-width: 320px;
+      max-width: 350px;
+      margin: 16px;
+    }
+    h2 {
+      text-align: center;
+      margin-top: 0;
+    }
+    form > div {
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      margin-bottom: 4px;
+    }
+    input, button {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="center-container">
+    <h2>Register</h2>
+    <form id="register-form">
+      <div>
+        <label for="fullname">Full Name:</label>
+        <input type="text" id="fullname" required>
+      </div>
+      <div>
+        <label for="register-username">Username:</label>
+        <input type="text" id="register-username" required>
+      </div>
+      <div>
+        <label for="email">Email:</label>
+        <input type="email" id="email" required>
+      </div>
+      <div>
+        <label for="register-password">Password:</label>
+        <input type="password" id="register-password" required>
+      </div>
+      <div>
+        <label for="confirm-password">Confirm Password:</label>
+        <input type="password" id="confirm-password" required>
+      </div>
+      <div>
+        <button type="submit">Register</button>
+      </div>
+    </form>
+    <div id="register-message"></div>
+    <button id="back-login" style="margin-top:12px;">Back to Login</button>
+  </div>
+  <script>
+    document.getElementById('register-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const fullname = document.getElementById('fullname').value;
+      const username = document.getElementById('register-username').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('register-password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      const msg = document.getElementById('register-message');
+      if (password !== confirmPassword) {
+        msg.style.color = '#d00';
+        msg.textContent = 'Passwords do not match.';
+        return;
+      }
+      const res = await fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullname, username, email, password })
+      });
+      const data = await res.json();
+      if (data.success) {
+        msg.style.color = '#080';
+        msg.textContent = 'Registration successful!';
+      } else {
+        msg.style.color = '#d00';
+        msg.textContent = data.error || 'Registration failed.';
+      }
+    });
+    document.getElementById('back-login').onclick = function() {
+      window.location.href = '/';
+    };
+  </script>
+</body>
+</html>
