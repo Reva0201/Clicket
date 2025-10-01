@@ -7,11 +7,176 @@
     body {
       min-height: 100vh;
       margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+    }
+    .layout {
+      display: flex;
+      height: 100vh;
+      flex-direction: row;
+    }
+    .sidebar {
+      width: 60px;
+      background: #232d32;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 16px;
+      transition: width 0.2s;
+      position: relative;
+      z-index: 2;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      width: 100%;
+    }
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      height: 48px;
+      cursor: pointer;
+      padding: 0 12px;
+      color: #fff;
+      transition: background 0.15s;
+      position: relative;
+    }
+    .sidebar-item .icon {
+      font-size: 1.4em;
+      width: 32px;
+      text-align: center;
+    }
+    .sidebar-item .label {
+      opacity: 0;
+      white-space: nowrap;
+      margin-left: 12px;
+      background: #232d32;
+      color: #fff;
+      border-radius: 4px;
+      padding: 4px 12px;
+      pointer-events: none;
+      transition: opacity 0.2s, left 0.2s;
+      position: absolute;
+      left: 60px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+      font-size: 1em;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .sidebar-item:hover {
+      background: #34424a;
+    }
+    .sidebar-item:hover .label {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      background: #f4f6f8;
+      position: relative;
+    }
+    .topbar {
+      height: 56px;
+      background: #254a78;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      z-index: 1;
+    }
+    .topbar-left {
+      display: flex;
+      align-items: center;
+    }
+    .logo-placeholder {
+      width: 36px;
+      height: 36px;
+      background: #fff;
+      color: #254a78;
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f7f7f7;
-      font-family: Arial, sans-serif;
+      font-weight: bold;
+      font-size: 1.1em;
+      margin-right: 16px;
+    }
+    .site-title {
+      font-size: 1.2em;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+    .user-dropdown {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      position: relative;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+    .user-dropdown:hover, .user-dropdown.active {
+      background: #3a5a8a;
+    }
+    .user-logo {
+      font-size: 1.3em;
+      margin-right: 8px;
+    }
+    .user-name {
+      font-weight: 500;
+      font-size: 1em;
+    }
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 110%;
+      background: #fff;
+      color: #254a78;
+      min-width: 140px;
+      border-radius: 6px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+      z-index: 100;
+      flex-direction: column;
+      padding: 8px 0;
+    }
+    .user-dropdown.active .dropdown-menu {
+      display: flex;
+    }
+    .dropdown-menu a {
+      color: #254a78;
+      text-decoration: none;
+      padding: 10px 20px;
+      font-size: 1em;
+      border: none;
+      background: none;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .dropdown-menu a:hover {
+      background: #f0f4fa;
+    }
+    .content-area {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 32px 0 32px 0;
+      min-height: 0;
+      min-width: 0;
     }
     .center-container {
       background: #fff;
@@ -22,180 +187,201 @@
       max-width: 350px;
       margin: 16px;
     }
-    h2 {
-      text-align: center;
-      margin-top: 0;
-    }
-    form > div {
-      margin-bottom: 12px;
-    }
-    label {
-      display: block;
-      margin-bottom: 4px;
-    }
-    input, select, button {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 8px;
-      margin-top: 2px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      font-size: 1em;
-    }
-    button {
-      background: #1976d2;
+    .bottombar {
+      height: 36px;
+      background: #254a78;
       color: #fff;
-      border: none;
-      cursor: pointer;
-      font-weight: bold;
-      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1em;
+      letter-spacing: 0.5px;
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1;
     }
-    button:hover {
-      background: #1256a3;
+    /* Hide scrollbars for sidebar */
+    .sidebar::-webkit-scrollbar {
+      display: none;
     }
-    #logout-btn, #back-btn {
-      width: auto;
-      margin-top: 12px;
-      background: #e53935;
+    /* Responsive for small screens */
+    @media (max-width: 700px) {
+      .main-content { padding-left: 0; }
+      .sidebar { width: 48px; }
+      .sidebar-item .icon { font-size: 1.1em; }
+      .center-container { min-width: 220px; max-width: 98vw; }
+      .topbar, .bottombar { padding: 0 8px; }
     }
-    #logout-btn:hover, #back-btn:hover {
-      background: #b71c1c;
-    }
-    #login-message, #ticket-message, #payment-message {
-      color: #e53935;
-      min-height: 20px;
-      text-align: center;
-      margin-bottom: 0;
-    }
-    #payment-summary {
-      margin-bottom: 16px;
-      text-align: center;
+    .auth-center {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f4f6f8;
+      flex-direction: column;
     }
   </style>
 </head>
-<body>
-  <div class="center-container" id="login-section">
-    <h2>Login</h2>
-    <form id="login-form">
-      <div>
-        <label for="username">Username:</label>
-        <input type="text" id="username" required>
+  <body>
+    <!-- Login/Register Section -->
+    <div id="auth-section" class="auth-center">
+      <div class="center-container" id="login-section">
+        <h2>Login</h2>
+        <form id="login-form">
+          <div>
+            <label for="username">Username:</label>
+            <input type="text" id="username" required>
+          </div>
+          <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" required>
+          </div>
+          <div>
+            <button type="submit">Login</button>
+            <button type="button" id="go-register" style="margin-top:8px;">Register</button>
+          </div>
+        </form>
+        <div id="login-message"></div>
       </div>
-      <div>
-        <label for="password">Password:</label>
-        <input type="password" id="password" required>
+      <div class="center-container" id="register-section" style="display:none;">
+        <h2>Register</h2>
+        <form id="register-form">
+          <div>
+            <label for="register-username">Username:</label>
+            <input type="text" id="register-username" required>
+          </div>
+          <div>
+            <label for="register-password">Password:</label>
+            <input type="password" id="register-password" required>
+          </div>
+          <div>
+            <button type="submit">Register</button>
+            <button type="button" id="go-login" style="margin-top:8px;">Back to Login</button>
+          </div>
+        </form>
+        <div id="register-message"></div>
       </div>
-      <div>
-        <button type="submit">Login</button>
-        <button type="button" id="go-register" style="margin-top:8px;">Register</button>
-      </div>
-    </form>
-    <div id="login-message"></div>
-  </div>
-
-  <div class="center-container" id="ticket-section" style="display:none;">
-    <h2>Buy Ticket</h2>
-    <form id="ticket-form">
-      <div>
-        <label for="event">Event:</label>
-        <select id="event">
-          <option value="Concert">Concert (Rp 1.000.000)</option>
-          <option value="Theater">Theater (Rp 750.000)</option>
-          <option value="Sports">Sports (Rp 500.000)</option>
-        </select>
-      </div>
-      <div>
-        <label for="quantity">Quantity:</label>
-        <input type="number" id="quantity" min="1" value="1" required>
-      </div>
-      <div>
-        <strong>Total Price:</strong> <span id="total-price">Rp 1.000.000</span>
-      </div>
-      <div>
-        <button type="submit">Buy</button>
-      </div>
-    </form>
-    <div id="ticket-message"></div>
-    <button id="logout-btn">Logout</button>
-  </div>
-
-  <div class="center-container" id="payment-section" style="display:none;">
-    <h2>Payment</h2>
-    <div>
-      <p id="payment-summary"></p>
-      <form id="payment-form">
-        <div>
-          <label for="card-number">Card Number:</label>
-          <input type="text" id="card-number" required>
-        </div>
-        <div>
-          <label for="card-name">Name on Card:</label>
-          <input type="text" id="card-name" required>
-        </div>
-        <div>
-          <label for="card-expiry">Expiry:</label>
-          <input type="text" id="card-expiry" placeholder="MM/YY" required>
-        </div>
-        <div>
-          <label for="card-cvc">CVC:</label>
-          <input type="text" id="card-cvc" required>
-        </div>
-        <div>
-          <button type="submit">Pay</button>
-        </div>
-      </form>
-      <div id="payment-message"></div>
     </div>
-    <button id="back-btn">Back</button>
-  </div>
+
+    <!-- Main App Layout (hidden until login) -->
+    <div class="layout" id="app-layout" style="display:none;">
+      <!-- Sidebar -->
+      <nav class="sidebar">
+        <ul id="sidebar-list">
+          <li class="sidebar-item" data-section="tickets" title="Tickets">
+            <span class="icon">🎟️</span>
+            <span class="label">Tickets</span>
+          </li>
+          <li class="sidebar-item" title="Menu 2">
+            <span class="icon">📄</span>
+            <span class="label">Menu 2</span>
+          </li>
+          <li class="sidebar-item" title="Menu 3">
+            <span class="icon">🎓</span>
+            <span class="label">Menu 3</span>
+          </li>
+          <li class="sidebar-item" title="Menu 4">
+            <span class="icon">🔗</span>
+            <span class="label">Menu 4</span>
+          </li>
+          <li class="sidebar-item" title="Menu 5">
+            <span class="icon">⚙️</span>
+            <span class="label">Menu 5</span>
+          </li>
+          <!-- Admin menu, hidden by default -->
+          <li class="sidebar-item" data-section="admin" title="Admin" id="admin-menu" style="display:none;">
+            <span class="icon">🛡️</span>
+            <span class="label">Admin</span>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="main-content">
+        <!-- Topbar -->
+        <header class="topbar">
+          <div class="topbar-left">
+            <span class="logo-placeholder">BLM</span>
+            <span class="site-title">Clicket</span>
+          </div>
+          <div class="topbar-right">
+            <div class="user-dropdown" id="user-dropdown">
+              <span class="user-logo">👤</span>
+              <span class="user-name" id="user-name">User Name</span>
+              <div class="dropdown-menu" id="dropdown-menu">
+                <a href="#" id="edit-profile">Edit Profile</a>
+                <a href="#" id="logout">Logout</a>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Main area -->
+        <div class="content-area" id="content-area">
+          <!-- Ticket section will be injected here -->
+        </div>
+
+        <!-- Bottom bar -->
+        <footer class="bottombar">
+          <span>📞 (021) 123-4567 &nbsp; | &nbsp; Jl. Scientia UMN</span>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Hidden sections for injection -->
+    <div style="display:none">
+      <div id="ticket-section-template">
+        <div class="center-container" id="ticket-section">
+          <h2>Buy Ticket</h2>
+          <form id="ticket-form">
+            <div>
+              <label for="event">Event:</label>
+              <select id="event">
+                <option value="Concert">Concert (Rp 1.000.000)</option>
+                <option value="Theater">Theater (Rp 750.000)</option>
+                <option value="Sports">Sports (Rp 500.000)</option>
+              </select>
+            </div>
+            <div>
+              <label for="quantity">Quantity:</label>
+              <input type="number" id="quantity" min="1" value="1" required>
+            </div>
+            <div>
+              <strong>Total Price:</strong> <span id="total-price">Rp 1.000.000</span>
+            </div>
+            <div>
+              <button type="submit">Buy</button>
+            </div>
+          </form>
+          <div id="ticket-message"></div>
+        </div>
+      </div>
+    </div>
 
   <script>
-    // Simulated user data (JSON)
-    const users = [
-      { username: "user1", password: "pass1" },
-      { username: "user2", password: "pass2" }
-    ];
-
-    const eventPrices = {
-      "Concert": 1000000,
-      "Theater": 750000,
-      "Sports": 500000
-    };
-
-    function formatRupiah(number) {
-      return "Rp " + number.toLocaleString("id-ID");
-    }
-
-    const loginForm = document.getElementById('login-form');
+    // --- Auth Section Logic ---
+    const authSection = document.getElementById('auth-section');
+    const appLayout = document.getElementById('app-layout');
     const loginSection = document.getElementById('login-section');
+    const registerSection = document.getElementById('register-section');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
     const loginMessage = document.getElementById('login-message');
-    const ticketSection = document.getElementById('ticket-section');
-    const ticketForm = document.getElementById('ticket-form');
-    const ticketMessage = document.getElementById('ticket-message');
-    const logoutBtn = document.getElementById('logout-btn');
-    const eventSelect = document.getElementById('event');
-    const quantityInput = document.getElementById('quantity');
-    const totalPriceSpan = document.getElementById('total-price');
+    const registerMessage = document.getElementById('register-message');
+    const goRegister = document.getElementById('go-register');
+    const goLogin = document.getElementById('go-login');
 
-    const paymentSection = document.getElementById('payment-section');
-    const paymentSummary = document.getElementById('payment-summary');
-    const paymentForm = document.getElementById('payment-form');
-    const paymentMessage = document.getElementById('payment-message');
-    const backBtn = document.getElementById('back-btn');
-
-    let selectedEvent = "";
-    let selectedQuantity = 1;
-    let selectedTotal = 0;
-
-    function updateTotalPrice() {
-      const event = eventSelect.value;
-      const price = eventPrices[event];
-      const quantity = parseInt(quantityInput.value, 10) || 1;
-      totalPriceSpan.textContent = formatRupiah(price * quantity);
-    }
-
-    eventSelect.addEventListener('change', updateTotalPrice);
-    quantityInput.addEventListener('input', updateTotalPrice);
+    goRegister.addEventListener('click', function() {
+      loginSection.style.display = 'none';
+      registerSection.style.display = 'block';
+      loginMessage.textContent = '';
+    });
+    goLogin.addEventListener('click', function() {
+      registerSection.style.display = 'none';
+      loginSection.style.display = 'block';
+      registerMessage.textContent = '';
+    });
 
     loginForm.addEventListener('submit', function(e) {
       e.preventDefault();
@@ -209,7 +395,15 @@
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          window.location.href = '/ticket.html';
+          document.getElementById('user-name').textContent = data.fullname || username;
+          if (data.role && data.role.toLowerCase() === 'admin') {
+            document.getElementById('admin-menu').style.display = '';
+          } else {
+            document.getElementById('admin-menu').style.display = 'none';
+          }
+          authSection.style.display = 'none';
+          appLayout.style.display = 'flex';
+          showTicketSection();
         } else {
           loginMessage.textContent = data.error || 'Invalid username or password.';
         }
@@ -219,39 +413,163 @@
       });
     });
 
-    ticketForm.addEventListener('submit', function(e) {
+    registerForm.addEventListener('submit', async function(e) {
       e.preventDefault();
-      selectedEvent = eventSelect.value;
-      selectedQuantity = parseInt(quantityInput.value, 10) || 1;
-      selectedTotal = eventPrices[selectedEvent] * selectedQuantity;
-      ticketSection.style.display = 'none';
-      paymentSection.style.display = 'block';
-      paymentSummary.textContent = `You are buying ${selectedQuantity} ticket(s) for ${selectedEvent}. Total price: ${formatRupiah(selectedTotal)}`;
-      ticketMessage.textContent = '';
-      paymentMessage.textContent = '';
+      const username = document.getElementById('register-username').value;
+      const password = document.getElementById('register-password').value;
+      const res = await fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, fullname: username, email: username + '@mail.com' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        registerMessage.style.color = '#080';
+        registerMessage.textContent = 'Registration successful!';
+      } else {
+        registerMessage.style.color = '#d00';
+        registerMessage.textContent = data.error || 'Registration failed.';
+      }
     });
 
-    paymentForm.addEventListener('submit', function(e) {
+    // --- App Layout Logic ---
+    // Sidebar menu logic
+    function setupSidebarMenu() {
+      document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.addEventListener('click', function() {
+          const section = item.getAttribute('data-section');
+          if (section === 'tickets') {
+            showTicketSection();
+          } else if (section === 'admin') {
+            showAdminSection();
+          } else {
+            document.getElementById('content-area').innerHTML = '';
+          }
+        });
+      });
+    }
+    setupSidebarMenu();
+
+    // User dropdown logic (fix: keep open when hovering dropdown menu)
+    const userDropdown = document.getElementById('user-dropdown');
+    const dropdownMenu = document.getElementById('dropdown-menu');
+    let dropdownTimer = null;
+    function showDropdown() {
+      clearTimeout(dropdownTimer);
+      userDropdown.classList.add('active');
+    }
+    function hideDropdown() {
+      dropdownTimer = setTimeout(() => {
+        userDropdown.classList.remove('active');
+      }, 120);
+    }
+    userDropdown.addEventListener('mouseenter', showDropdown);
+    userDropdown.addEventListener('mouseleave', hideDropdown);
+    dropdownMenu.addEventListener('mouseenter', showDropdown);
+    dropdownMenu.addEventListener('mouseleave', hideDropdown);
+
+    // Dropdown menu actions
+    document.getElementById('edit-profile').addEventListener('click', function(e) {
       e.preventDefault();
-      paymentMessage.textContent = `Payment successful! You have purchased ${selectedQuantity} ticket(s) for ${selectedEvent}. Please check your email for the ticket(s).`;
-      paymentForm.reset();
+      alert('Edit Profile clicked!');
     });
-
-    backBtn.addEventListener('click', function() {
-      paymentSection.style.display = 'none';
-      ticketSection.style.display = 'block';
-      paymentMessage.textContent = '';
-    });
-
-    logoutBtn.addEventListener('click', function() {
-      ticketSection.style.display = 'none';
+    document.getElementById('logout').addEventListener('click', function(e) {
+      e.preventDefault();
+      // Hide app, show login
+      appLayout.style.display = 'none';
+      authSection.style.display = 'block';
       loginSection.style.display = 'block';
-      ticketMessage.textContent = '';
+      registerSection.style.display = 'none';
       loginForm.reset();
+      registerForm.reset();
+      loginMessage.textContent = '';
+      registerMessage.textContent = '';
     });
 
-    // Initialize total price on page load
-    updateTotalPrice();
+    // Ticket section logic
+    function showTicketSection() {
+      const template = document.getElementById('ticket-section-template');
+      const content = template.innerHTML;
+      document.getElementById('content-area').innerHTML = content;
+      // Add ticket form logic
+      const eventPrices = {
+        "Concert": 1000000,
+        "Theater": 750000,
+        "Sports": 500000
+      };
+      function formatRupiah(number) {
+        return "Rp " + number.toLocaleString("id-ID");
+      }
+      const ticketForm = document.getElementById('ticket-form');
+      const eventSelect = document.getElementById('event');
+      const quantityInput = document.getElementById('quantity');
+      const totalPriceSpan = document.getElementById('total-price');
+      function updateTotalPrice() {
+        const event = eventSelect.value;
+        const price = eventPrices[event];
+        const quantity = parseInt(quantityInput.value, 10) || 1;
+        totalPriceSpan.textContent = formatRupiah(price * quantity);
+      }
+      eventSelect.addEventListener('change', updateTotalPrice);
+      quantityInput.addEventListener('input', updateTotalPrice);
+      updateTotalPrice();
+      ticketForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        // Redirect to payment.html
+        window.location.href = 'payment.html';
+      });
+    }
+    // --- Admin Section Logic ---
+    function showAdminSection() {
+      fetch('/users')
+        .then(res => res.json())
+        .then(users => {
+          renderAdminUserList(users);
+        })
+        .catch(() => {
+          document.getElementById('content-area').innerHTML = '<div style="padding:32px;">Failed to load users.</div>';
+        });
+    }
+    function renderAdminUserList(users) {
+      let html = `<div style="max-width:600px;width:100%;margin:0 auto;">
+        <h2 style="text-align:center;">User Management</h2>
+        <div style="max-height:400px;overflow-y:auto;box-shadow:0 2px 8px rgba(0,0,0,0.06);border-radius:8px;background:#fff;padding:16px;">
+          <table style="width:100%;border-collapse:collapse;">
+            <thead><tr style="background:#f4f6f8;"><th style="padding:8px 4px;">Full Name</th><th>Username</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead>
+            <tbody>`;
+      users.forEach(user => {
+        html += `<tr style="border-bottom:1px solid #eee;">
+          <td style="padding:8px 4px;">${user.fullname || ''}</td>
+          <td>${user.username}</td>
+          <td>${user.email}</td>
+          <td>${user.role}</td>
+          <td>
+            <button onclick="makeAdmin('${user.username}')" style="margin-right:8px;" ${user.role==='admin'?'disabled':''}>Make Admin</button>
+            <button onclick="deleteUser('${user.username}')" style="color:#d00;">Delete</button>
+          </td>
+        </tr>`;
+      });
+      html += '</tbody></table></div></div>';
+      document.getElementById('content-area').innerHTML = html;
+    }
+    window.makeAdmin = function(username) {
+      if(confirm('Make ' + username + ' an admin?')) {
+        fetch('/users/make-admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username })
+        }).then(() => showAdminSection());
+      }
+    };
+    window.deleteUser = function(username) {
+      if(confirm('Delete user ' + username + '?')) {
+        fetch('/users/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username })
+        }).then(() => showAdminSection());
+      }
+    };
   </script>
 </body>
   <script>

@@ -3,6 +3,28 @@
     "fullname": "Adam Kevin",
     "username": "Adam",
     "email": "Adam@gmail.com",
-    "password": "$2b$10$LJuHKvNa3uAo3h3fckhRIuGLC9uulxnTT5clLL2.1G9UX9hpb2l16"
+    "password": "$2b$10$LJuHKvNa3uAo3h3fckhRIuGLC9uulxnTT5clLL2.1G9UX9hpb2l16",
+    "role": "user"
+  },
+  {
+    "fullname": "Kevin",
+    "username": "Kevin",
+    "email": "kev@d.com",
+    "password": "$2b$10$BB1osd/C5F/GWKHHEa158OJX8bl/LIZ2Dx/YmV7m4wZvFnTeBft/2",
+    "role": "user"
+  },
+  {
+    "fullname": "llm",
+    "username": "llm",
+    "email": "LLM@GMAIL.COM",
+    "password": "$2b$10$XSb6j1lnw.K34.4CrZhfvuUm/h3pMfq86VD6/TctOfWLnrJLzqwCe",
+    "role": "admin"
+  },
+  {
+    "fullname": "mml",
+    "username": "mml",
+    "email": "mml@gmail.com",
+    "password": "$2b$10$Vg.FeosgmKZmSccwAGpv/uWuskAXNjUGMIPuErLOgBRYwLq8AAHm.",
+    "role": "user"
   }
 ]
