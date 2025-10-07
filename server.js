@@ -7,9 +7,9 @@ const bodyParser = require('body-parser');
 const app = express();
 const PORT = 3000;
 const USERS_FILE = path.join(__dirname, 'users.json');
+const EVENTS_FILE = path.join(__dirname, 'events.json');
 // Serve static files (for register.html and others)
 app.use(express.static(__dirname));
-// Serve index.html for root
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -30,6 +30,7 @@ function writeUsers(users) {
 }
 
 // Registration endpoint
+
 app.post('/register', async (req, res) => {
     const { fullname, username, email, password, role } = req.body;
     if (!fullname || !username || !email || !password) {
@@ -43,7 +44,14 @@ app.post('/register', async (req, res) => {
         return res.status(409).json({ error: 'Email already registered.' });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
+    // Find max id and increment
+    let maxId = 0;
+    users.forEach(u => {
+        if (typeof u.id === 'number' && u.id > maxId) maxId = u.id;
+    });
+    const newId = maxId + 1;
     users.push({
+        id: newId,
         fullname,
         username,
         email,
@@ -72,6 +80,60 @@ app.post('/login', async (req, res) => {
     res.json({ success: true, fullname: user.fullname, email: user.email, role: user.role || 'user' });
 });
 
+app.get('/events', (req, res) => {
+    if (!fs.existsSync(EVENTS_FILE)) return res.json([]);
+    const data = fs.readFileSync(EVENTS_FILE);
+    let events = [];
+    try {
+        events = JSON.parse(data);
+    } catch (e) {
+        return res.status(500).json({ error: 'Failed to parse events data.' });
+    }
+    res.json(events);
+});
+
+// Update events 
+function readEvents() {
+    if (!fs.existsSync(EVENTS_FILE)) return [];
+    const data = fs.readFileSync(EVENTS_FILE);
+    return JSON.parse(data);
+}
+// Tulis lagi
+function writeEvents(events) {
+    fs.writeFileSync(EVENTS_FILE, JSON.stringify(events, null, 2));
+}
+
+// Add event menu
+app.post('/events/add', (req, res) => {
+    const { name, price, amount, userId } = req.body;
+    if (!name || !price || !amount || !userId) {
+        return res.status(400).json({ error: 'All fields required.' });
+    }
+    let events = readEvents();
+    let event = events.find(e => e.name.toLowerCase() === name.toLowerCase());
+    if (event) {
+        // Check if price exists
+        let priceObj = event.prices.find(p => p.price === Number(price));
+        if (priceObj) {
+            priceObj.stock += Number(amount);
+        } else {
+            event.prices.push({ price: Number(price), stock: Number(amount), userId: Number(userId) });
+        }
+        // Sort prices ascending
+        event.prices.sort((a, b) => a.price - b.price);
+    } else {
+        // New event
+        let maxId = events.reduce((max, e) => e.id > max ? e.id : max, 0);
+        events.push({
+            id: maxId + 1,
+            name,
+            prices: [{ price: Number(price), stock: Number(amount), userId: Number(userId) }]
+        });
+    }
+    writeEvents(events);
+    res.json({ success: true, message: 'Successfully added event' });
+});
+
 // Admin: Get all users (no password)
 app.get('/users', (req, res) => {
     const users = readUsers();
@@ -96,9 +158,12 @@ app.post('/users/delete', (req, res) => {
     const { username } = req.body;
     if (!username) return res.status(400).json({ error: 'Username required' });
     let users = readUsers();
-    const before = users.length;
+    const user = users.find(u => u.username.toLowerCase() === username.toLowerCase());
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.role && user.role.toLowerCase() === 'admin') {
+        return res.status(403).json({ error: 'Admin users cannot be deleted.' });
+    }
     users = users.filter(u => u.username.toLowerCase() !== username.toLowerCase());
-    if (users.length === before) return res.status(404).json({ error: 'User not found' });
     writeUsers(users);
     res.json({ success: true });
 });

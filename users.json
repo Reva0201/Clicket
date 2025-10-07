@@ -1,19 +1,14 @@
 [
   {
-    "fullname": "Adam Kevin",
-    "username": "Adam",
-    "email": "Adam@gmail.com",
-    "password": "$2b$10$LJuHKvNa3uAo3h3fckhRIuGLC9uulxnTT5clLL2.1G9UX9hpb2l16",
-    "role": "user"
-  },
-  {
+    "id": 1,
     "fullname": "Kevin",
     "username": "Kevin",
     "email": "kev@d.com",
     "password": "$2b$10$BB1osd/C5F/GWKHHEa158OJX8bl/LIZ2Dx/YmV7m4wZvFnTeBft/2",
-    "role": "user"
+    "role": "admin"
   },
   {
+    "id": 2,
     "fullname": "llm",
     "username": "llm",
     "email": "LLM@GMAIL.COM",
@@ -21,10 +16,19 @@
     "role": "admin"
   },
   {
-    "fullname": "mml",
-    "username": "mml",
-    "email": "mml@gmail.com",
-    "password": "$2b$10$Vg.FeosgmKZmSccwAGpv/uWuskAXNjUGMIPuErLOgBRYwLq8AAHm.",
+    "id": 3,
+    "fullname": "Adam Kevin",
+    "username": "AdamKevin",
+    "email": "AdamKevin@gmail.com",
+    "password": "$2b$10$UajIE8rApL5BiopEqOTQiOtnVDmLOlEbjHOmrM0AUdPZlnKOxwDhu",
+    "role": "user"
+  },
+  {
+    "id": 4,
+    "fullname": "Lia2",
+    "username": "Liamneeson2",
+    "email": "Liamss@gmail.com",
+    "password": "$2b$10$BaLWr0U6.bZObnL41M0eDORu1Ab5oPUBEQlmLRWTCTjUWfwSArTR2",
     "role": "user"
   }
 ]

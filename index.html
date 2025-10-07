@@ -187,6 +187,26 @@
       max-width: 350px;
       margin: 16px;
     }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #b0b8c1;
+      font-size: 1em;
+      margin-top: 2px;
+    }
     .bottombar {
       height: 36px;
       background: #254a78;
@@ -274,9 +294,9 @@
             <span class="icon">🎟️</span>
             <span class="label">Tickets</span>
           </li>
-          <li class="sidebar-item" title="Menu 2">
-            <span class="icon">📄</span>
-            <span class="label">Menu 2</span>
+          <li class="sidebar-item" data-section="events" title="Events">
+            <span class="icon">🎪</span>
+            <span class="label">Events</span>
           </li>
           <li class="sidebar-item" title="Menu 3">
             <span class="icon">🎓</span>
@@ -331,32 +351,58 @@
 
     <!-- Hidden sections for injection -->
     <div style="display:none">
-      <div id="ticket-section-template">
+      <template id="ticket-section-template">
         <div class="center-container" id="ticket-section">
           <h2>Buy Ticket</h2>
           <form id="ticket-form">
-            <div>
+            <div class="form-group">
               <label for="event">Event:</label>
               <select id="event">
                 <option value="Concert">Concert (Rp 1.000.000)</option>
                 <option value="Theater">Theater (Rp 750.000)</option>
-                <option value="Sports">Sports (Rp 500.000)</option>
+                <option value="F1">F1 (Rp 2.000.000)</option>
+                <option value="VCT Valorant">VCT Valorant (Rp 1.500.000)</option>
               </select>
             </div>
-            <div>
+            <div class="form-group">
               <label for="quantity">Quantity:</label>
               <input type="number" id="quantity" min="1" value="1" required>
             </div>
-            <div>
+            <div class="form-group">
               <strong>Total Price:</strong> <span id="total-price">Rp 1.000.000</span>
             </div>
-            <div>
-              <button type="submit">Buy</button>
+            <div class="form-group" style="margin-bottom:0;">
+              <button type="submit">Continue to Payment</button>
             </div>
           </form>
           <div id="ticket-message"></div>
         </div>
-      </div>
+      </template>
+      <template id="payment-section-template">
+        <div class="center-container">
+          <h2>Payment</h2>
+          <div id="payment-summary"></div>
+          <form id="payment-form">
+            <div class="form-group">
+              <label for="card">Card Number:</label>
+              <input type="text" id="card" required>
+            </div>
+            <div class="form-group">
+              <label for="expiry">Expiry Date:</label>
+              <input type="text" id="expiry" required>
+            </div>
+            <div class="form-group">
+              <label for="cvv">CVV:</label>
+              <input type="text" id="cvv" required>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <button type="submit">Pay</button>
+            </div>
+          </form>
+          <div id="payment-message"></div>
+          <button id="back-main" style="margin-top:12px;">Back to Main Page</button>
+        </div>
+      </template>
     </div>
 
   <script>
@@ -442,9 +488,60 @@
             showTicketSection();
           } else if (section === 'admin') {
             showAdminSection();
+          } else if (section === 'events') {
+            showEventsSection();
           } else {
             document.getElementById('content-area').innerHTML = '';
           }
+    // Events section logic (Menu 2)
+    function showEventsSection() {
+      const html = `
+        <div class="center-container" id="events-section">
+          <h2>Add Event</h2>
+          <form id="add-event-form">
+            <div class="form-group">
+              <label for="event-name">Event Name:</label>
+              <input type="text" id="event-name" required>
+            </div>
+            <div class="form-group">
+              <label for="event-price">Price:</label>
+              <input type="number" id="event-price" min="1" required>
+            </div>
+            <div class="form-group">
+              <label for="event-amount">Amount:</label>
+              <input type="number" id="event-amount" min="1" required>
+            </div>
+            <div class="form-group">
+              <button type="submit">Add Event</button>
+            </div>
+          </form>
+          <div id="add-event-message"></div>
+        </div>
+      `;
+      document.getElementById('content-area').innerHTML = html;
+      document.getElementById('add-event-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const name = document.getElementById('event-name').value;
+        const price = document.getElementById('event-price').value;
+        const amount = document.getElementById('event-amount').value;
+        // Get userId from logged in user (simulate: use llm for now)
+        let userId = 2;
+        const res = await fetch('/events/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, price, amount, userId })
+        });
+        const data = await res.json();
+        const msg = document.getElementById('add-event-message');
+        if (data.success) {
+          msg.style.color = '#080';
+          msg.textContent = data.message || 'Successfully added event';
+        } else {
+          msg.style.color = '#d00';
+          msg.textContent = data.error || 'Failed to add event.';
+        }
+      });
+    }
         });
       });
     }
@@ -491,33 +588,132 @@
       const template = document.getElementById('ticket-section-template');
       const content = template.innerHTML;
       document.getElementById('content-area').innerHTML = content;
-      // Add ticket form logic
-      const eventPrices = {
-        "Concert": 1000000,
-        "Theater": 750000,
-        "Sports": 500000
-      };
-      function formatRupiah(number) {
-        return "Rp " + number.toLocaleString("id-ID");
+      // Show loading message while fetching
+      const ticketSection = document.getElementById('ticket-section');
+      ticketSection.insertAdjacentHTML('beforeend', '<div id="event-loading" style="text-align:center;margin-top:12px;">Loading events...</div>');
+      fetch('/events')
+        .then(res => res.json())
+        .then(events => {
+          document.getElementById('event-loading').remove();
+          const eventSelect = document.getElementById('event');
+          eventSelect.innerHTML = '';
+          events.forEach(ev => {
+            // Show lowest price in dropdown
+            const sortedPrices = ev.prices.slice().sort((a, b) => a.price - b.price);
+            const opt = document.createElement('option');
+            opt.value = ev.id;
+            opt.textContent = `${ev.name} (Rp ${sortedPrices[0].price.toLocaleString('id-ID')})`;
+            eventSelect.appendChild(opt);
+          });
+          // Map for name/price/stock lookup
+          const eventNames = {};
+          const eventPriceLists = {};
+          events.forEach(ev => {
+            eventNames[ev.id] = ev.name;
+            eventPriceLists[ev.id] = ev.prices.slice().sort((a, b) => a.price - b.price);
+          });
+          function formatRupiah(number) {
+            return "Rp " + number.toLocaleString("id-ID");
+          }
+          const ticketForm = document.getElementById('ticket-form');
+          const quantityInput = document.getElementById('quantity');
+          const totalPriceSpan = document.getElementById('total-price');
+          // Add stock info next to quantity
+          let stockInfoSpan = document.getElementById('stock-info');
+          if (!stockInfoSpan) {
+            const label = ticketForm.querySelector('label[for="quantity"]');
+            stockInfoSpan = document.createElement('span');
+            stockInfoSpan.id = 'stock-info';
+            stockInfoSpan.style.marginLeft = '8px';
+            label.appendChild(stockInfoSpan);
+          }
+          function updateStockInfo() {
+            const event = eventSelect.value;
+            const priceList = eventPriceLists[event];
+            const totalStock = priceList.reduce((sum, p) => sum + p.stock, 0);
+            stockInfoSpan.textContent = `(${totalStock} left)`;
+          }
+          function updateTotalPrice() {
+            const event = eventSelect.value;
+            const priceList = eventPriceLists[event];
+            const quantity = parseInt(quantityInput.value, 10) || 1;
+            let qtyLeft = quantity;
+            let total = 0;
+            let breakdown = [];
+            for (let p of priceList) {
+              if (qtyLeft <= 0) break;
+              let take = Math.min(p.stock, qtyLeft);
+              if (take > 0) {
+                breakdown.push({ price: p.price, count: take });
+                total += p.price * take;
+                qtyLeft -= take;
+              }
+            }
+            let breakdownText = breakdown.map(b => `${b.count}x Ticket(s) of Rp. ${b.price.toLocaleString('id-ID')}`).join('<br>');
+            totalPriceSpan.innerHTML = breakdownText + '<br><b>Total:</b> ' + formatRupiah(total);
+            updateStockInfo();
+          }
+          eventSelect.addEventListener('change', updateTotalPrice);
+          quantityInput.addEventListener('input', updateTotalPrice);
+          updateTotalPrice();
+          ticketForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const event = eventSelect.value;
+            const quantity = parseInt(quantityInput.value, 10) || 1;
+            // Purchase request
+            fetch('/tickets/purchase', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ eventId: event, quantity })
+            })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                showPaymentSection(event, quantity, eventNames, eventPriceLists, data.breakdown);
+              } else {
+                document.getElementById('ticket-message').textContent = data.error || 'Purchase failed.';
+              }
+            });
+          });
+        })
+        .catch(() => {
+          document.getElementById('event-loading').textContent = 'Failed to load events.';
+        });
+    }
+
+    // Payment Section Logic
+    function showPaymentSection(event, quantity, eventNames, eventPriceLists, breakdown) {
+      const template = document.getElementById('payment-section-template');
+      document.getElementById('content-area').innerHTML = template.innerHTML;
+      let breakdownText = '';
+      let total = 0;
+      if (breakdown && breakdown.length) {
+        breakdownText = breakdown.map(b => `${b.count}x Ticket(s) of Rp. ${b.price.toLocaleString('id-ID')}`).join('<br>');
+        total = breakdown.reduce((sum, b) => sum + b.price * b.count, 0);
+      } else {
+        // fallback
+        const priceList = eventPriceLists[event];
+        let qtyLeft = quantity;
+        for (let p of priceList) {
+          if (qtyLeft <= 0) break;
+          let take = Math.min(p.stock, qtyLeft);
+          if (take > 0) {
+            breakdownText += `${take}x Ticket(s) of Rp. ${p.price.toLocaleString('id-ID')}<br>`;
+            total += p.price * take;
+            qtyLeft -= take;
+          }
+        }
       }
-      const ticketForm = document.getElementById('ticket-form');
-      const eventSelect = document.getElementById('event');
-      const quantityInput = document.getElementById('quantity');
-      const totalPriceSpan = document.getElementById('total-price');
-      function updateTotalPrice() {
-        const event = eventSelect.value;
-        const price = eventPrices[event];
-        const quantity = parseInt(quantityInput.value, 10) || 1;
-        totalPriceSpan.textContent = formatRupiah(price * quantity);
-      }
-      eventSelect.addEventListener('change', updateTotalPrice);
-      quantityInput.addEventListener('input', updateTotalPrice);
-      updateTotalPrice();
-      ticketForm.addEventListener('submit', function(e) {
+      document.getElementById('payment-summary').innerHTML = `You are buying ${quantity} ticket(s) for ${eventNames[event]}<br>${breakdownText}<b>Total price:</b> Rp ${total.toLocaleString('id-ID')}`;
+      document.getElementById('payment-form').addEventListener('submit', function(e) {
         e.preventDefault();
-        // Redirect to payment.html
-        window.location.href = 'payment.html';
+        document.getElementById('payment-message').style.color = '#1976d2';
+        document.getElementById('payment-message').textContent = `Payment successful! You have purchased ${quantity} ticket(s) for ${eventNames[event]}. Please check your email for the ticket(s).`;
+        document.getElementById('payment-form').reset();
       });
+      document.getElementById('back-main').onclick = function() {
+        showTicketSection();
+      };
     }
     // --- Admin Section Logic ---
     function showAdminSection() {
@@ -531,17 +727,25 @@
         });
     }
     function renderAdminUserList(users) {
-      let html = `<div style="max-width:600px;width:100%;margin:0 auto;">
+  let html = `<div style="max-width:1100px;width:96vw;margin:0 auto;">
         <h2 style="text-align:center;">User Management</h2>
-        <div style="max-height:400px;overflow-y:auto;box-shadow:0 2px 8px rgba(0,0,0,0.06);border-radius:8px;background:#fff;padding:16px;">
+  <div style="max-height:400px;overflow-y:auto;box-shadow:0 2px 8px rgba(0,0,0,0.06);border-radius:8px;background:#fff;padding:24px 32px 24px 32px;">
           <table style="width:100%;border-collapse:collapse;">
-            <thead><tr style="background:#f4f6f8;"><th style="padding:8px 4px;">Full Name</th><th>Username</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead>
+              <thead><tr style="background:#f4f6f8;">
+                <th style="padding:8px 4px;min-width:40px;">ID</th>
+                <th style="padding:8px 4px;min-width:160px;">Full Name</th>
+                <th style="min-width:100px;">Username</th>
+                <th style="min-width:220px;">Email</th>
+                <th style="min-width:70px;">Role</th>
+                <th style="min-width:180px;">Actions</th>
+              </tr></thead>
             <tbody>`;
       users.forEach(user => {
         html += `<tr style="border-bottom:1px solid #eee;">
+          <td style="padding:8px 4px;">${user.id !== undefined ? user.id : ''}</td>
           <td style="padding:8px 4px;">${user.fullname || ''}</td>
           <td>${user.username}</td>
-          <td>${user.email}</td>
+            <td style="min-width:220px;">${user.email}</td>
           <td>${user.role}</td>
           <td>
             <button onclick="makeAdmin('${user.username}')" style="margin-right:8px;" ${user.role==='admin'?'disabled':''}>Make Admin</button>
@@ -563,6 +767,20 @@
     };
     window.deleteUser = function(username) {
       if(confirm('Delete user ' + username + '?')) {
+        // Find the user role from the table row
+        const row = Array.from(document.querySelectorAll('tr')).find(tr => {
+          const tds = tr.querySelectorAll('td');
+          return tds[1] && tds[1].textContent === username;
+        });
+        let role = '';
+        if (row) {
+          const tds = row.querySelectorAll('td');
+          role = tds[3] ? tds[3].textContent.trim().toLowerCase() : '';
+        }
+        if (role === 'admin') {
+          alert("Tidak bisa bg!");
+          return;
+        }
         fetch('/users/delete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

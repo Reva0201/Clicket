@@ -131,17 +131,3 @@
     </script>
   </body>
   </html>
-              quantity = parseInt(quantity, 10);
-              if (!quantity || quantity < 1) {
-                document.getElementById('ticket-message').textContent = 'Please enter a valid quantity.';
-                return;
-              }
-              window.location.href = `/payment.html?event=${id}&quantity=${quantity}`;
-            };
-          });
-          document.getElementById('back-event').onclick = function() {
-            window.location.href = '/event.html';
-          };
-        </script>
-      </body>
-      </html>

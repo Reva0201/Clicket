@@ -1,0 +1,67 @@
+[
+  {
+    "id": 1,
+    "name": "Concert",
+    "prices": [
+      {
+        "price": 500000,
+        "stock": 2,
+        "userId": 2
+      },
+      {
+        "price": 1000000,
+        "stock": 45,
+        "userId": 2
+      },
+      {
+        "price": 1200000,
+        "stock": 1,
+        "userId": 2
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Theater",
+    "prices": [
+      {
+        "price": 750000,
+        "stock": 30,
+        "userId": 2
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "F1",
+    "prices": [
+      {
+        "price": 2000000,
+        "stock": 10,
+        "userId": 2
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "VCT Valorant",
+    "prices": [
+      {
+        "price": 1500000,
+        "stock": 20,
+        "userId": 2
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Labubu",
+    "prices": [
+      {
+        "price": 5000000,
+        "stock": 5,
+        "userId": 2
+      }
+    ]
+  }
+]
