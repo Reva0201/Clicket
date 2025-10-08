@@ -8,7 +8,7 @@
       min-height: 100vh;
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f4f6f8;
+      background: #f4f6f8 ;
     }
     .layout {
       display: flex;
@@ -239,8 +239,51 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f4f6f8;
+      /* make transparent so body background is visible */
+      background: transparent;
       flex-direction: column;
+    }
+    /* Login button loading spinner removed */
+    /* Full-page background using an external image (place your image at /assets/login-bg.png) */
+    body {
+      /* fallback color if image fails to load */
+      background-color: #f4f6f8;
+      /* use relative path so file:// and local servers both resolve correctly */
+        /* Place your background image at: assets/bg-pattern.png (or keep the existing login-bg.png)
+    /* try pattern first, fall back to previous login-bg.png if present */
+    background-image: url('assets/bg-pattern.png'), url('assets/login-bg.png');
+    background-color: #244b6a; /* fallback color while image loads */
+        background-color: #244b6a; /* fallback color while image loads */
+        background-size: cover;
+        background-attachment: fixed;
+        background-position: center center;
+        background-repeat: no-repeat;
+        position: relative;
+      }
+      /* dark overlay so content remains readable; lowered opacity so pattern shows through */
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.15);
+        z-index: 0;
+        pointer-events: none;
+      }
+    /* Ensure main UI sits above the overlay */
+    .auth-center, .main-content {
+      position: relative;
+      z-index: 1; 
+    }
+    /* Inputs should be readable on top of background */
+    .center-container input[type="text"],
+    .center-container input[type="password"] {
+      background: rgba(255,255,255,0.95);
+      color: #000;
+      border: 1px solid #cbd3da;
+    }
+    /* Buttons contrast */
+    .center-container button {
+      color: #fff;
     }
   </style>
 </head>
@@ -250,38 +293,55 @@
       <div class="center-container" id="login-section">
         <h2>Login</h2>
         <form id="login-form">
-          <div>
-            <label for="username">Username:</label>
-            <input type="text" id="username" required>
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" autocomplete="username" required>
           </div>
-          <div>
-            <label for="password">Password:</label>
-            <input type="password" id="password" required>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <div style="position:relative;">
+              <input type="password" id="password" autocomplete="current-password" required style="padding-right:90px;">
+              <button type="button" id="toggle-password" aria-pressed="false" title="Show password" style="position:absolute;right:6px;top:6px;padding:6px;border:0;background:transparent;cursor:pointer;">
+                <img id="toggle-password-img" src="/assets/show.png" alt="Show password" style="width:18px;height:18px;display:block;">
+              </button>
+            </div>
           </div>
-          <div>
-            <button type="submit">Login</button>
-            <button type="button" id="go-register" style="margin-top:8px;">Register</button>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:0.95em;"><input type="checkbox" id="remember-me"> Remember me</label>
+            <a href="#" id="forgot-link" style="font-size:0.9em;color:#254a78;text-decoration:none;">Forgot?</a>
+          </div>
+          <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
+            <button id="login-btn" type="submit" style="background:#254a78;padding:10px 12px;border-radius:6px;">Login</button>
+            <button type="button" id="go-register" style="background:#1976d2;padding:8px 10px;border-radius:6px;color:#fff;">Create account</button>
           </div>
         </form>
-        <div id="login-message"></div>
+        <div id="login-message" style="margin-top:12px;color:#d00;min-height:20px"></div>
       </div>
       <div class="center-container" id="register-section" style="display:none;">
-        <h2>Register</h2>
+        <a href="#" id="go-login-top" style="display:inline-block;margin-bottom:10px;color:#254a78;text-decoration:none;font-size:0.95em;">← Back to login</a>
+        <h2>Create account</h2>
         <form id="register-form">
-          <div>
-            <label for="register-username">Username:</label>
+          <div class="form-group">
+            <label for="register-fullname">Full name</label>
+            <input type="text" id="register-fullname" required>
+          </div>
+          <div class="form-group">
+            <label for="register-username">Username</label>
             <input type="text" id="register-username" required>
           </div>
-          <div>
-            <label for="register-password">Password:</label>
+          <div class="form-group">
+            <label for="register-email">Email</label>
+            <input type="email" id="register-email" required>
+          </div>
+          <div class="form-group">
+            <label for="register-password">Password</label>
             <input type="password" id="register-password" required>
           </div>
-          <div>
-            <button type="submit">Register</button>
-            <button type="button" id="go-login" style="margin-top:8px;">Back to Login</button>
+          <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px;">
+            <button type="submit" style="background:#1976d2;padding:10px;border-radius:6px;color:#fff;">Create account</button>
           </div>
         </form>
-        <div id="register-message"></div>
+        <div id="register-message" style="min-height:20px;margin-top:12px;"></div>
       </div>
     </div>
 
@@ -415,24 +475,77 @@
     const registerForm = document.getElementById('register-form');
     const loginMessage = document.getElementById('login-message');
     const registerMessage = document.getElementById('register-message');
-    const goRegister = document.getElementById('go-register');
-    const goLogin = document.getElementById('go-login');
+  const goRegister = document.getElementById('go-register');
+  const goLogin = document.getElementById('go-login'); // may be null after removal
 
     goRegister.addEventListener('click', function() {
       loginSection.style.display = 'none';
       registerSection.style.display = 'block';
       loginMessage.textContent = '';
     });
-    goLogin.addEventListener('click', function() {
-      registerSection.style.display = 'none';
-      loginSection.style.display = 'block';
-      registerMessage.textContent = '';
+    if (goLogin) {
+      goLogin.addEventListener('click', function() {
+        registerSection.style.display = 'none';
+        loginSection.style.display = 'block';
+        registerMessage.textContent = '';
+      });
+    }
+
+    // also wire the top back link in the register panel (makes it more visible)
+    const goLoginTop = document.getElementById('go-login-top');
+    if (goLoginTop) {
+      goLoginTop.addEventListener('click', function(e) {
+        e.preventDefault();
+        registerSection.style.display = 'none';
+        loginSection.style.display = 'block';
+        registerMessage.textContent = '';
+      });
+    }
+
+    // --- enhanced login behavior ---
+    const loginBtn = document.getElementById('login-btn');
+    const togglePasswordBtn = document.getElementById('toggle-password');
+    const rememberCheckbox = document.getElementById('remember-me');
+
+    // restore remembered username
+    try {
+      const remembered = localStorage.getItem('rememberedUser');
+      if (remembered) {
+        document.getElementById('username').value = remembered;
+        rememberCheckbox.checked = true;
+      }
+    } catch(e) {}
+
+    togglePasswordBtn.addEventListener('click', function() {
+      const pw = document.getElementById('password');
+      const img = document.getElementById('toggle-password-img');
+      if (pw.type === 'password') {
+        pw.type = 'text';
+        img.src = '/assets/hide.png';
+        img.alt = 'Hide password';
+        togglePasswordBtn.setAttribute('aria-pressed', 'true');
+        togglePasswordBtn.title = 'Hide password';
+      } else {
+        pw.type = 'password';
+        img.src = '/assets/show.png';
+        img.alt = 'Show password';
+        togglePasswordBtn.setAttribute('aria-pressed', 'false');
+        togglePasswordBtn.title = 'Show password';
+      }
     });
 
     loginForm.addEventListener('submit', function(e) {
       e.preventDefault();
-      const username = document.getElementById('username').value;
+      loginMessage.textContent = '';
+      const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
+      if (!username || !password) {
+        loginMessage.textContent = 'Please enter username and password.';
+        return;
+      }
+  // UI: disable button to prevent double submit
+  loginBtn.disabled = true;
+
       fetch('/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -441,6 +554,11 @@
       .then(res => res.json())
       .then(data => {
         if (data.success) {
+          // remember username if requested
+          try {
+            if (rememberCheckbox.checked) localStorage.setItem('rememberedUser', username);
+            else localStorage.removeItem('rememberedUser');
+          } catch(e) {}
           document.getElementById('user-name').textContent = data.fullname || username;
           if (data.role && data.role.toLowerCase() === 'admin') {
             document.getElementById('admin-menu').style.display = '';
@@ -456,25 +574,51 @@
       })
       .catch(() => {
         loginMessage.textContent = 'Login failed.';
+      })
+      .finally(() => {
+        loginBtn.disabled = false;
       });
     });
 
     registerForm.addEventListener('submit', async function(e) {
       e.preventDefault();
-      const username = document.getElementById('register-username').value;
+      // client-side validation
+      const fullname = document.getElementById('register-fullname').value.trim();
+      const username = document.getElementById('register-username').value.trim();
+      const email = document.getElementById('register-email').value.trim();
       const password = document.getElementById('register-password').value;
-      const res = await fetch('/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, fullname: username, email: username + '@mail.com' })
-      });
-      const data = await res.json();
-      if (data.success) {
-        registerMessage.style.color = '#080';
-        registerMessage.textContent = 'Registration successful!';
-      } else {
+      registerMessage.textContent = '';
+      if (!fullname || !username || !email || !password) {
         registerMessage.style.color = '#d00';
-        registerMessage.textContent = data.error || 'Registration failed.';
+        registerMessage.textContent = 'Please fill all fields.';
+        return;
+      }
+      try {
+        const res = await fetch('/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, fullname, email })
+        });
+        const data = await res.json();
+        if (data.success) {
+          registerMessage.style.color = '#080';
+          registerMessage.textContent = 'Registration successful — please login.';
+          // Prefill login and switch back
+          document.getElementById('username').value = username;
+          // small delay for UX
+          setTimeout(() => {
+            registerSection.style.display = 'none';
+            loginSection.style.display = 'block';
+            registerForm.reset();
+            registerMessage.textContent = '';
+          }, 900);
+        } else {
+          registerMessage.style.color = '#d00';
+          registerMessage.textContent = data.error || 'Registration failed.';
+        }
+      } catch (err) {
+        registerMessage.style.color = '#d00';
+        registerMessage.textContent = 'Registration failed.';
       }
     });
 
@@ -574,7 +718,8 @@
       e.preventDefault();
       // Hide app, show login
       appLayout.style.display = 'none';
-      authSection.style.display = 'block';
+      // use flex so the auth-center keeps its centering layout
+      authSection.style.display = 'flex';
       loginSection.style.display = 'block';
       registerSection.style.display = 'none';
       loginForm.reset();
@@ -790,30 +935,5 @@
     };
   </script>
 </body>
-  <script>
-    document.getElementById('go-register').addEventListener('click', function() {
-      window.location.href = '/register.html';
-    });
-  </script>
-  <script>
-    document.getElementById('register-form').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const username = document.getElementById('register-username').value;
-      const password = document.getElementById('register-password').value;
-      const res = await fetch('/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      const data = await res.json();
-      const msg = document.getElementById('register-message');
-      if (data.success) {
-        msg.style.color = '#080';
-        msg.textContent = 'Registration successful!';
-      } else {
-        msg.style.color = '#d00';
-        msg.textContent = data.error || 'Registration failed.';
-      }
-    });
-  </script>
+  
 </html>

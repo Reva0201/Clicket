@@ -63,5 +63,16 @@
         "userId": 2
       }
     ]
+  },
+  {
+    "id": 6,
+    "name": "alto joget",
+    "prices": [
+      {
+        "price": 20000,
+        "stock": 10000,
+        "userId": 2
+      }
+    ]
   }
 ]

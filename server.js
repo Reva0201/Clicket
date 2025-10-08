@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const bodyParser = require('body-parser');
 
@@ -166,6 +167,50 @@ app.post('/users/delete', (req, res) => {
     users = users.filter(u => u.username.toLowerCase() !== username.toLowerCase());
     writeUsers(users);
     res.json({ success: true });
+});
+
+// Forgot password - generate token and (in real app) email it to user
+app.post('/forgot', (req, res) => {
+    const emailRaw = (req.body && req.body.email) ? String(req.body.email) : '';
+    const email = emailRaw.trim();
+    if (!email) return res.status(400).json({ error: 'Email required' });
+    const users = readUsers();
+    const emailLower = email.toLowerCase();
+    // match by normalized email, or as fallback by username
+    const user = users.find(u => {
+        if (!u) return false;
+        if (u.email && String(u.email).trim().toLowerCase() === emailLower) return true;
+        if (u.username && String(u.username).trim().toLowerCase() === emailLower) return true;
+        return false;
+    });
+    console.log('[FORGOT] lookup for:', email, 'found:', !!user);
+    if (!user) return res.status(404).json({ error: 'Email not found' });
+    const token = crypto.randomBytes(20).toString('hex');
+    const expires = Date.now() + 1000 * 60 * 60; // 1 hour
+    user.resetToken = token;
+    user.resetExpires = expires;
+    writeUsers(users);
+    // In production you'd email a link like: https://your-site/reset?token=...&email=...
+    // For now return the token (so frontend can display it or simulate email)
+    res.json({ success: true, message: 'Reset token generated', token });
+});
+
+// Reset password with token
+app.post('/reset-password', async (req, res) => {
+    const { email, token, newPassword } = req.body;
+    if (!email || !token || !newPassword) return res.status(400).json({ error: 'Email, token and newPassword required' });
+    const users = readUsers();
+    const user = users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase());
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user.resetToken || !user.resetExpires || user.resetToken !== token || Date.now() > user.resetExpires) {
+        return res.status(400).json({ error: 'Invalid or expired token' });
+    }
+    const hashed = await bcrypt.hash(newPassword, 10);
+    user.password = hashed;
+    delete user.resetToken;
+    delete user.resetExpires;
+    writeUsers(users);
+    res.json({ success: true, message: 'Password updated' });
 });
 
 app.listen(PORT, () => {

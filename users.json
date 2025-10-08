@@ -30,5 +30,13 @@
     "email": "Liamss@gmail.com",
     "password": "$2b$10$BaLWr0U6.bZObnL41M0eDORu1Ab5oPUBEQlmLRWTCTjUWfwSArTR2",
     "role": "user"
+  },
+  {
+    "id": 5,
+    "fullname": "Ryan Fernando",
+    "username": "Ryan",
+    "email": "ryan@gmail.com",
+    "password": "$2b$10$6OcnEVH3HGWpXY1sWQtMIO5AkUcyrNLl7wDw.Z/66kFyvWuNMI7Bi",
+    "role": "user"
   }
 ]
