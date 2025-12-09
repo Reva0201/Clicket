@@ -21,7 +21,11 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Simple request logger for debugging
 app.use((req, res, next) => {
-    console.log('[REQ]', req.method, req.url);
+    try {
+        console.log('[REQ]', req.method, req.url);
+    } catch (e) {
+        console.error('[LOGGER ERROR]', e.message);
+    }
     next();
 });
 
@@ -124,33 +128,44 @@ function writePurchases(purchases) {
 // Add event menu
 app.post('/events/add', (req, res) => {
     try {
-        console.log('[EVENTS.ADD] body=', req.body);
-        const { name, price, amount, userId } = req.body || {};
-        if (!name || (price === undefined || amount === undefined)) {
+        console.log('[EVENTS.ADD] START - body=', JSON.stringify(req.body));
+        const body = req.body || {};
+        const { name, price, amount, userId } = body;
+        console.log('[EVENTS.ADD] Extracted: name=%s, price=%s, amount=%s, userId=%s', name, price, amount, userId);
+        
+        if (!name || price === undefined || amount === undefined) {
+            console.log('[EVENTS.ADD] Validation failed: missing fields');
             return res.status(400).json({ error: 'Name, price and amount are required.' });
         }
-        // ensure numeric
+        
         const priceNum = Number(price);
         const amountNum = Number(amount);
+        console.log('[EVENTS.ADD] Converted: price=%f, amount=%f', priceNum, amountNum);
+        
         if (!Number.isFinite(priceNum) || !Number.isFinite(amountNum)) {
+            console.log('[EVENTS.ADD] Not finite');
             return res.status(400).json({ error: 'Price and amount must be numbers.' });
         }
-        // allow userId to be optional (default to 0 for anonymous/non-admin creators)
+        
         const uid = (userId !== undefined && userId !== null) ? Number(userId) : 0;
+        console.log('[EVENTS.ADD] userId=%d', uid);
+        
+        console.log('[EVENTS.ADD] Reading events...');
         let events = readEvents();
+        console.log('[EVENTS.ADD] Got %d events', events.length);
+        
         let event = events.find(e => e.name && String(e.name).toLowerCase() === String(name).toLowerCase());
+        console.log('[EVENTS.ADD] Found existing event: %s', event ? 'yes' : 'no');
+        
         if (event) {
-            // Check if price exists
             let priceObj = event.prices.find(p => Number(p.price) === priceNum);
             if (priceObj) {
                 priceObj.stock = (Number.isFinite(priceObj.stock) ? priceObj.stock : 0) + amountNum;
             } else {
                 event.prices.push({ price: priceNum, stock: amountNum, userId: uid });
             }
-            // Sort prices ascending
             event.prices.sort((a, b) => a.price - b.price);
         } else {
-            // New event
             let maxId = events.reduce((max, e) => (e && e.id && e.id > max) ? e.id : max, 0);
             events.push({
                 id: maxId + 1,
@@ -158,12 +173,14 @@ app.post('/events/add', (req, res) => {
                 prices: [{ price: priceNum, stock: amountNum, userId: uid }]
             });
         }
+        
+        console.log('[EVENTS.ADD] Writing events...');
         writeEvents(events);
-        console.log('[EVENTS.ADD] success, wrote events.json');
+        console.log('[EVENTS.ADD] SUCCESS');
         res.json({ success: true, message: 'Successfully added event' });
     } catch (err) {
-        console.error('[EVENTS.ADD] error', err);
-        res.status(500).json({ error: 'Failed to add event', detail: err && err.message });
+        console.error('[EVENTS.ADD] CAUGHT ERROR:', err.message, err.stack);
+        res.status(500).json({ error: 'Failed to add event', detail: err.message });
     }
 });
 
@@ -484,6 +501,29 @@ app.post('/users/change-password', async (req, res) => {
         console.error('Change password error', e);
         res.status(500).json({ error: 'Failed to change password' });
     }
+});
+
+// 404 handler
+app.use((req, res) => {
+    console.log('[404] Not found:', req.method, req.url);
+    res.status(404).json({ error: 'Not found' });
+});
+
+// Error handling middleware - MUST come after all routes
+app.use((err, req, res, next) => {
+    console.error('[MIDDLEWARE ERROR]', err.message);
+    console.error(err.stack);
+    res.status(500).json({ error: 'Internal Server Error', detail: err.message });
+});
+
+// Global error handlers
+process.on('uncaughtException', (err) => {
+    console.error('[FATAL] Uncaught Exception:', err);
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[FATAL] Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
 app.listen(PORT, () => {

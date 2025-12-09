@@ -4,18 +4,8 @@
     "name": "Concert",
     "prices": [
       {
-        "price": 500000,
-        "stock": 2,
-        "userId": 2
-      },
-      {
         "price": 1000000,
-        "stock": 45,
-        "userId": 2
-      },
-      {
-        "price": 1200000,
-        "stock": 1,
+        "stock": 44,
         "userId": 2
       }
     ]

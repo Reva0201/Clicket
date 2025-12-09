@@ -837,22 +837,7 @@
         }
       });
 
-      // Extra click handler on the Add/Update button to ensure submit is triggered and user sees feedback
-      (function attachAddButtonHelper(){
-        const addBtnEl = document.getElementById('add-event-submit');
-        if (!addBtnEl) return;
-        addBtnEl.addEventListener('click', function(ev) {
-          try {
-            const msg = document.getElementById('add-event-message');
-            if (msg) { msg.style.color = '#1976d2'; msg.textContent = 'Processing...'; }
-            const form = document.getElementById('add-event-form');
-            if (form) {
-              if (typeof form.requestSubmit === 'function') form.requestSubmit();
-              else form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-            }
-          } catch (e) { console.error('[EVENTS.UI] add button handler error', e); }
-        });
-      })();
+      // No extra click handler needed - form submission is triggered automatically by type="submit"
 
       // initial load
       loadEventsList();
