@@ -9,6 +9,7 @@ const app = express();
 const PORT = 3000;
 const USERS_FILE = path.join(__dirname, 'users.json');
 const EVENTS_FILE = path.join(__dirname, 'events.json');
+const PURCHASES_FILE = path.join(__dirname, 'purchases.json');
 // Serve static files (for register.html and others)
 app.use(express.static(__dirname));
 app.get('/', (req, res) => {
@@ -17,6 +18,12 @@ app.get('/', (req, res) => {
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Simple request logger for debugging
+app.use((req, res, next) => {
+    console.log('[REQ]', req.method, req.url);
+    next();
+});
 
 // Helper to read users
 function readUsers() {
@@ -104,35 +111,281 @@ function writeEvents(events) {
     fs.writeFileSync(EVENTS_FILE, JSON.stringify(events, null, 2));
 }
 
+function readPurchases() {
+    if (!fs.existsSync(PURCHASES_FILE)) return [];
+    const data = fs.readFileSync(PURCHASES_FILE);
+    return JSON.parse(data);
+}
+
+function writePurchases(purchases) {
+    fs.writeFileSync(PURCHASES_FILE, JSON.stringify(purchases, null, 2));
+}
+
 // Add event menu
 app.post('/events/add', (req, res) => {
-    const { name, price, amount, userId } = req.body;
-    if (!name || !price || !amount || !userId) {
-        return res.status(400).json({ error: 'All fields required.' });
-    }
-    let events = readEvents();
-    let event = events.find(e => e.name.toLowerCase() === name.toLowerCase());
-    if (event) {
-        // Check if price exists
-        let priceObj = event.prices.find(p => p.price === Number(price));
-        if (priceObj) {
-            priceObj.stock += Number(amount);
-        } else {
-            event.prices.push({ price: Number(price), stock: Number(amount), userId: Number(userId) });
+    try {
+        console.log('[EVENTS.ADD] body=', req.body);
+        const { name, price, amount, userId } = req.body || {};
+        if (!name || (price === undefined || amount === undefined)) {
+            return res.status(400).json({ error: 'Name, price and amount are required.' });
         }
-        // Sort prices ascending
-        event.prices.sort((a, b) => a.price - b.price);
-    } else {
-        // New event
-        let maxId = events.reduce((max, e) => e.id > max ? e.id : max, 0);
-        events.push({
-            id: maxId + 1,
-            name,
-            prices: [{ price: Number(price), stock: Number(amount), userId: Number(userId) }]
-        });
+        // ensure numeric
+        const priceNum = Number(price);
+        const amountNum = Number(amount);
+        if (!Number.isFinite(priceNum) || !Number.isFinite(amountNum)) {
+            return res.status(400).json({ error: 'Price and amount must be numbers.' });
+        }
+        // allow userId to be optional (default to 0 for anonymous/non-admin creators)
+        const uid = (userId !== undefined && userId !== null) ? Number(userId) : 0;
+        let events = readEvents();
+        let event = events.find(e => e.name && String(e.name).toLowerCase() === String(name).toLowerCase());
+        if (event) {
+            // Check if price exists
+            let priceObj = event.prices.find(p => Number(p.price) === priceNum);
+            if (priceObj) {
+                priceObj.stock = (Number.isFinite(priceObj.stock) ? priceObj.stock : 0) + amountNum;
+            } else {
+                event.prices.push({ price: priceNum, stock: amountNum, userId: uid });
+            }
+            // Sort prices ascending
+            event.prices.sort((a, b) => a.price - b.price);
+        } else {
+            // New event
+            let maxId = events.reduce((max, e) => (e && e.id && e.id > max) ? e.id : max, 0);
+            events.push({
+                id: maxId + 1,
+                name: String(name),
+                prices: [{ price: priceNum, stock: amountNum, userId: uid }]
+            });
+        }
+        writeEvents(events);
+        console.log('[EVENTS.ADD] success, wrote events.json');
+        res.json({ success: true, message: 'Successfully added event' });
+    } catch (err) {
+        console.error('[EVENTS.ADD] error', err);
+        res.status(500).json({ error: 'Failed to add event', detail: err && err.message });
+    }
+});
+
+// Update event (rename, add/update price tier)
+app.post('/events/update', (req, res) => {
+    const { id, name, price, amount } = req.body;
+    if (!id) return res.status(400).json({ error: 'Event id required' });
+    let events = readEvents();
+    const ev = events.find(e => String(e.id) === String(id));
+    if (!ev) return res.status(404).json({ error: 'Event not found' });
+    if (name && String(name).trim()) ev.name = String(name).trim();
+    // Support explicit prices array (replace tiers) or legacy price+amount (increment)
+    if (Array.isArray(req.body.prices)) {
+        try {
+            const newPrices = req.body.prices.map(p => ({ price: Number(p.price), stock: Number(p.stock) }));
+            // sanitize NaN
+            ev.prices = newPrices.map(p => ({ price: Number.isFinite(p.price) ? p.price : 0, stock: Number.isFinite(p.stock) ? p.stock : 0 }));
+            ev.prices.sort((a, b) => a.price - b.price);
+        } catch (e) {
+            return res.status(400).json({ error: 'Invalid prices array' });
+        }
+    } else if (price && amount) {
+        const priceVal = Number(price);
+        const amountVal = Number(amount);
+        let priceObj = ev.prices.find(p => Number(p.price) === priceVal);
+        if (priceObj) {
+            priceObj.stock = (Number.isFinite(priceObj.stock) ? priceObj.stock : 0) + amountVal;
+        } else {
+            ev.prices.push({ price: priceVal, stock: amountVal });
+        }
+        ev.prices.sort((a, b) => a.price - b.price);
     }
     writeEvents(events);
-    res.json({ success: true, message: 'Successfully added event' });
+    res.json({ success: true, message: 'Event updated' });
+});
+
+// Delete an event by id
+app.post('/events/delete', (req, res) => {
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ error: 'Event id required' });
+    let events = readEvents();
+    const idx = events.findIndex(e => String(e.id) === String(id));
+    if (idx === -1) return res.status(404).json({ error: 'Event not found' });
+    events.splice(idx, 1);
+    writeEvents(events);
+    res.json({ success: true, message: 'Event deleted' });
+});
+
+// Purchase tickets - atomically decrement stock
+app.post('/tickets/purchase', (req, res) => {
+    const { eventId, quantity } = req.body;
+    const qty = Number(quantity);
+    if (!eventId || !qty || qty < 1) return res.status(400).json({ error: 'eventId and positive quantity required' });
+
+    let events = readEvents();
+    // find by id or name (case-insensitive)
+    let ev = events.find(e => String(e.id) === String(eventId));
+    if (!ev) ev = events.find(e => e.name && String(e.name).trim().toLowerCase() === String(eventId).trim().toLowerCase());
+    if (!ev) return res.status(404).json({ error: 'Event not found' });
+
+    // work on a copy of prices sorted ascending
+    const prices = (ev.prices || []).slice().sort((a, b) => a.price - b.price);
+    let qtyLeft = qty;
+    const breakdown = [];
+    for (let p of prices) {
+        if (qtyLeft <= 0) break;
+        const available = Number.isFinite(p.stock) ? p.stock : 0;
+        const take = Math.min(available, qtyLeft);
+        if (take > 0) {
+            breakdown.push({ price: p.price, count: take });
+            qtyLeft -= take;
+        }
+    }
+    if (qtyLeft > 0) {
+        // compute total available stock
+        const totalStock = (ev.prices || []).reduce((s, p) => s + (Number.isFinite(p.stock) ? p.stock : 0), 0);
+        return res.status(400).json({ error: 'Not enough stock', available: totalStock });
+    }
+
+    // Commit: decrement stocks on the real event object in events array
+    let remaining = qty;
+    for (let i = 0; i < ev.prices.length; i++) {
+        if (remaining <= 0) break;
+        const p = ev.prices[i];
+        const avail = Number.isFinite(p.stock) ? p.stock : 0;
+        const take = Math.min(avail, remaining);
+        if (take > 0) {
+            p.stock = avail - take;
+            remaining -= take;
+        }
+    }
+
+    writeEvents(events);
+    // Record purchase in purchases.json
+    try {
+        const purchases = readPurchases();
+        const maxId = purchases.reduce((m, it) => (typeof it.id === 'number' && it.id > m ? it.id : m), 0);
+        const total = breakdown.reduce((s, b) => s + (b.price * b.count), 0);
+        const purchaseRecord = {
+            id: maxId + 1,
+            timestamp: Date.now(),
+            eventId: ev.id != null ? ev.id : ev.name,
+            eventName: ev.name,
+            quantity: qty,
+            breakdown,
+            total
+        };
+        purchases.push(purchaseRecord);
+        writePurchases(purchases);
+    } catch (e) {
+        console.error('Failed to record purchase', e);
+    }
+
+    res.json({ success: true, breakdown });
+});
+
+// Return purchase history
+app.get('/purchases', (req, res) => {
+    try {
+        let purchases = readPurchases();
+        // optional filters: q (search), event, from, to
+        const q = req.query.q ? String(req.query.q).trim().toLowerCase() : '';
+        const eventFilter = req.query.event ? String(req.query.event).trim().toLowerCase() : '';
+        const from = req.query.from ? Number(req.query.from) : 0;
+        const to = req.query.to ? Number(req.query.to) : 0;
+        if (q) {
+            purchases = purchases.filter(p => (p.eventName && String(p.eventName).toLowerCase().includes(q)) || (String(p.id || '').toLowerCase().includes(q)) );
+        }
+        if (eventFilter) {
+            purchases = purchases.filter(p => p.eventName && p.eventName.toLowerCase() === eventFilter);
+        }
+        if (from) purchases = purchases.filter(p => (p.timestamp || 0) >= from);
+        if (to) purchases = purchases.filter(p => (p.timestamp || 0) <= to);
+        purchases.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        res.json(purchases);
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to read purchases' });
+    }
+});
+
+// Export purchases as CSV with same filters
+function exportPurchasesHandler(req, res) {
+    console.log('[EXPORT] request', req.method, req.url);
+    try {
+        // reuse the /purchases logic by building a fake query and calling helper
+        let purchases = readPurchases();
+        const q = req.query.q ? String(req.query.q).trim().toLowerCase() : '';
+        const eventFilter = req.query.event ? String(req.query.event).trim().toLowerCase() : '';
+        const from = req.query.from ? Number(req.query.from) : 0;
+        const to = req.query.to ? Number(req.query.to) : 0;
+        if (q) purchases = purchases.filter(p => (p.eventName && String(p.eventName).toLowerCase().includes(q)) || (String(p.id || '').toLowerCase().includes(q)) );
+        if (eventFilter) purchases = purchases.filter(p => p.eventName && p.eventName.toLowerCase() === eventFilter);
+        if (from) purchases = purchases.filter(p => (p.timestamp || 0) >= from);
+        if (to) purchases = purchases.filter(p => (p.timestamp || 0) <= to);
+        // Build CSV with proper escaping and UTF-8 BOM for Excel compatibility
+        function esc(val) {
+            if (val === null || val === undefined) return '""';
+            const s = String(val).replace(/"/g, '""');
+            return '"' + s + '"';
+        }
+        const headers = ['id','timestamp','date','eventId','eventName','quantity','total','breakdown','cancelled'];
+        const rows = purchases.map(p => {
+            const date = new Date(p.timestamp || 0).toISOString();
+            const breakdown = (p.breakdown || []).map(b => `${b.count}x${b.price}`).join(';');
+            return [esc(p.id), esc(p.timestamp), esc(date), esc(p.eventId), esc(p.eventName), esc(p.quantity), esc(p.total || 0), esc(breakdown), esc(p.cancelled ? 'yes' : 'no')].join(',');
+        });
+        let csv = headers.map(h => '"' + h + '"').join(',') + '\n' + rows.join('\n');
+        // prepend UTF-8 BOM so Excel recognizes UTF-8 correctly
+        csv = '\uFEFF' + csv;
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename="purchases.csv"');
+        res.send(csv);
+    } catch (e) {
+        console.error('[EXPORT] error', e);
+        res.status(500).json({ error: 'Failed to export purchases' });
+    }
+}
+
+app.get('/purchases/export', exportPurchasesHandler);
+app.get('/purchases/export.csv', exportPurchasesHandler);
+app.get('/export-purchases', exportPurchasesHandler);
+
+// Cancel a purchase and restore stock
+app.post('/purchases/cancel', (req, res) => {
+    const { id } = req.body;
+    const pid = Number(id);
+    if (!pid) return res.status(400).json({ error: 'purchase id required' });
+    try {
+        const purchases = readPurchases();
+        const idx = purchases.findIndex(p => Number(p.id) === pid);
+        if (idx === -1) return res.status(404).json({ error: 'Purchase not found' });
+        const purchase = purchases[idx];
+        if (purchase.cancelled) return res.status(400).json({ error: 'Purchase already cancelled' });
+
+        // Restore stock according to breakdown
+        const events = readEvents();
+        const ev = events.find(e => String(e.id) === String(purchase.eventId)) || events.find(e => e.name && String(e.name).trim().toLowerCase() === String(purchase.eventName || purchase.eventId).trim().toLowerCase());
+        if (ev && Array.isArray(purchase.breakdown)) {
+            for (const b of purchase.breakdown) {
+                // find matching price tier
+                const priceVal = Number(b.price);
+                let priceObj = ev.prices.find(p => Number(p.price) === priceVal);
+                if (priceObj) {
+                    priceObj.stock = (Number.isFinite(priceObj.stock) ? priceObj.stock : 0) + Number(b.count || 0);
+                } else {
+                    ev.prices.push({ price: priceVal, stock: Number(b.count || 0) });
+                }
+            }
+            // ensure prices sorted
+            ev.prices.sort((a, b) => a.price - b.price);
+            writeEvents(events);
+        }
+
+        // mark cancelled
+        purchase.cancelled = true;
+        purchase.cancelledAt = Date.now();
+        writePurchases(purchases);
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Failed to cancel purchase', e);
+        res.status(500).json({ error: 'Failed to cancel purchase' });
+    }
 });
 
 // Admin: Get all users (no password)
@@ -211,6 +464,26 @@ app.post('/reset-password', async (req, res) => {
     delete user.resetExpires;
     writeUsers(users);
     res.json({ success: true, message: 'Password updated' });
+});
+
+// Change password (user knows current password)
+app.post('/users/change-password', async (req, res) => {
+    const { username, currentPassword, newPassword } = req.body;
+    if (!username || !currentPassword || !newPassword) return res.status(400).json({ error: 'username, currentPassword and newPassword required' });
+    try {
+        const users = readUsers();
+        const user = users.find(u => u.username && u.username.toLowerCase() === String(username).toLowerCase());
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        const match = await bcrypt.compare(String(currentPassword), user.password);
+        if (!match) return res.status(401).json({ error: 'Current password is incorrect' });
+        const hashed = await bcrypt.hash(String(newPassword), 10);
+        user.password = hashed;
+        writeUsers(users);
+        res.json({ success: true, message: 'Password changed' });
+    } catch (e) {
+        console.error('Change password error', e);
+        res.status(500).json({ error: 'Failed to change password' });
+    }
 });
 
 app.listen(PORT, () => {

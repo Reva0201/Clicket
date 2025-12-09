@@ -74,5 +74,16 @@
         "userId": 2
       }
     ]
+  },
+  {
+    "id": 7,
+    "name": "alto salto",
+    "prices": [
+      {
+        "price": 15000,
+        "stock": 20,
+        "userId": 2
+      }
+    ]
   }
 ]

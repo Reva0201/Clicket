@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ticket Purchase</title>
   <style>
     body {
@@ -227,12 +228,26 @@
       display: none;
     }
     /* Responsive for small screens */
+    @media (max-width: 1100px) {
+      .center-container { max-width: 90vw; margin: 12px; }
+    }
+    @media (max-width: 900px) {
+      .events-grid{ grid-template-columns: repeat(2,1fr); }
+    }
     @media (max-width: 700px) {
       .main-content { padding-left: 0; }
-      .sidebar { width: 48px; }
-      .sidebar-item .icon { font-size: 1.1em; }
-      .center-container { min-width: 220px; max-width: 98vw; }
+      .sidebar { width: 100%; display: flex; flex-direction: row; justify-content: space-around; padding: 8px 0; }
+      .sidebar ul { display:flex; gap:8px; width:100%; justify-content:space-around; }
+      .sidebar-item { height:48px; flex:1; justify-content:center; }
+      .sidebar-item .label { display:none; }
+      .sidebar-item .icon { font-size: 1.2em; }
+      .center-container { min-width: auto; max-width: 96vw; margin: 8px; }
       .topbar, .bottombar { padding: 0 8px; }
+      .layout { flex-direction: column; height: auto; }
+    }
+    @media (max-width: 420px) {
+      .topbar-left .site-title { font-size: 1em; }
+      .center-container { padding: 12px; }
     }
     .auth-center {
       min-height: 100vh;
@@ -358,17 +373,17 @@
             <span class="icon">🎪</span>
             <span class="label">Events</span>
           </li>
-          <li class="sidebar-item" title="Menu 3">
+          <li class="sidebar-item" data-section="history" title="Purchase History">
             <span class="icon">🎓</span>
-            <span class="label">Menu 3</span>
+            <span class="label">History</span>
           </li>
           <li class="sidebar-item" title="Menu 4">
             <span class="icon">🔗</span>
             <span class="label">Menu 4</span>
           </li>
-          <li class="sidebar-item" title="Menu 5">
+          <li class="sidebar-item" data-section="settings" title="Settings">
             <span class="icon">⚙️</span>
-            <span class="label">Menu 5</span>
+            <span class="label">Settings</span>
           </li>
           <!-- Admin menu, hidden by default -->
           <li class="sidebar-item" data-section="admin" title="Admin" id="admin-menu" style="display:none;">
@@ -390,7 +405,6 @@
               <span class="user-logo">👤</span>
               <span class="user-name" id="user-name">User Name</span>
               <div class="dropdown-menu" id="dropdown-menu">
-                <a href="#" id="edit-profile">Edit Profile</a>
                 <a href="#" id="logout">Logout</a>
               </div>
             </div>
@@ -553,12 +567,13 @@
       })
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
+          if (data.success) {
           // remember username if requested
           try {
             if (rememberCheckbox.checked) localStorage.setItem('rememberedUser', username);
             else localStorage.removeItem('rememberedUser');
           } catch(e) {}
+          try { localStorage.setItem('clicketUser', username); localStorage.setItem('clicketRole', (data.role || 'user')); } catch(e) {}
           document.getElementById('user-name').textContent = data.fullname || username;
           if (data.role && data.role.toLowerCase() === 'admin') {
             document.getElementById('admin-menu').style.display = '';
@@ -634,57 +649,213 @@
             showAdminSection();
           } else if (section === 'events') {
             showEventsSection();
+          } else if (section === 'history') {
+            showHistorySection();
+          } else if (section === 'settings') {
+            showSettingsSection();
           } else {
             document.getElementById('content-area').innerHTML = '';
           }
-    // Events section logic (Menu 2)
+    // Events section logic (Menu 2) - includes admin list/edit/delete
     function showEventsSection() {
       const html = `
-        <div class="center-container" id="events-section">
-          <h2>Add Event</h2>
-          <form id="add-event-form">
-            <div class="form-group">
-              <label for="event-name">Event Name:</label>
-              <input type="text" id="event-name" required>
-            </div>
-            <div class="form-group">
-              <label for="event-price">Price:</label>
-              <input type="number" id="event-price" min="1" required>
-            </div>
-            <div class="form-group">
-              <label for="event-amount">Amount:</label>
-              <input type="number" id="event-amount" min="1" required>
-            </div>
-            <div class="form-group">
-              <button type="submit">Add Event</button>
-            </div>
-          </form>
-          <div id="add-event-message"></div>
+        <div class="center-container" id="events-section" style="max-width:1100px;">
+          <h2>Events</h2>
+          <div style="background:#fff;padding:16px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.04);margin-bottom:16px;">
+            <h3 style="margin:6px 0;">Add / Edit Event</h3>
+            <form id="add-event-form" style="display:block;">
+              <input type="hidden" id="event-id">
+              <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;">
+                <div style="flex:1;min-width:220px;">
+                  <label for="event-name">Event Name:</label>
+                  <input type="text" id="event-name" required>
+                </div>
+                <div style="width:160px;">
+                  <label for="event-price">Quick Price:</label>
+                  <input type="number" id="event-price" min="1" placeholder="price (optional)">
+                </div>
+                <div style="width:120px;">
+                  <label for="event-amount">Quick Amount:</label>
+                  <input type="number" id="event-amount" min="1" placeholder="amount (optional)">
+                </div>
+                <div>
+                  <button type="submit" id="add-event-submit">Add / Update</button>
+                </div>
+              </div>
+              <div style="margin-top:12px;">
+                <label style="font-weight:600;display:block;margin-bottom:8px;">Price Tiers (admin)</label>
+                <div id="price-rows" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;"></div>
+                <button type="button" id="add-price-tier">Add Price Tier</button>
+                <div style="font-size:0.9em;color:#666;margin-top:8px;">Tip: When editing an event, price tiers below will be applied as exact tiers. If no tiers are present, Quick Price/Amount will be used.</div>
+              </div>
+            </form>
+          </div>
+          <div id="events-list" style="background:#fff;padding:12px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.04);"></div>
         </div>
       `;
       document.getElementById('content-area').innerHTML = html;
+      // hide price-tier editing controls for non-admin users
+      try {
+        const isAdminLocal = ((localStorage.getItem('clicketRole')||'').toLowerCase() === 'admin');
+        if (!isAdminLocal) {
+          const pr = document.getElementById('price-rows');
+          const addBtn = document.getElementById('add-price-tier');
+          if (pr) pr.style.display = 'none';
+          if (addBtn) addBtn.style.display = 'none';
+          // hide the tip text (it is the next element after the button)
+          if (addBtn && addBtn.nextElementSibling) addBtn.nextElementSibling.style.display = 'none';
+        }
+      } catch(e) {}
+
+      async function loadEventsList() {
+        const container = document.getElementById('events-list');
+        container.innerHTML = 'Loading events...';
+        try {
+          const res = await fetch('/events');
+          if (!res.ok) throw new Error('Failed');
+          const events = await res.json();
+          if (!events || events.length === 0) {
+            container.innerHTML = '<div style="padding:12px;color:#666">No events yet.</div>';
+            return;
+          }
+          const isAdmin = (function(){ try{ return (localStorage.getItem('clicketRole')||'').toLowerCase() === 'admin'; }catch(e){ return false; } })();
+          let html = '<table style="width:100%;border-collapse:collapse;"><thead><tr style="background:#f4f6f8"><th style="padding:8px">ID</th><th style="padding:8px">Name</th><th style="padding:8px">Prices (stock)</th>' + (isAdmin? '<th style="padding:8px">Actions</th>' : '') + '</tr></thead><tbody>';
+          events.forEach(ev => {
+            const pricesText = (ev.prices||[]).map(p => Number(p.price).toLocaleString('id-ID') + ' × ' + (Number.isFinite(p.stock)?p.stock:0)).join('<br>');
+            html += `<tr style="border-bottom:1px solid #eee"><td style="padding:8px">${ev.id}</td><td style="padding:8px">${ev.name}</td><td style="padding:8px">${pricesText}</td>`;
+            if (isAdmin) {
+              html += `<td style="padding:8px"><button data-id="${ev.id}" class="edit-evt">Edit</button> <button data-id="${ev.id}" class="del-evt" style="color:#d00">Delete</button></td>`;
+            }
+            html += `</tr>`;
+          });
+          html += '</tbody></table>';
+          container.innerHTML = html;
+
+          // wire actions
+          container.querySelectorAll('.edit-evt').forEach(btn => {
+            btn.addEventListener('click', function() {
+              const id = this.getAttribute('data-id');
+              const ev = events.find(e => String(e.id) === String(id));
+              if (!ev) return;
+              document.getElementById('event-id').value = ev.id;
+              document.getElementById('event-name').value = ev.name || '';
+              // clear quick fields
+              document.getElementById('event-price').value = '';
+              document.getElementById('event-amount').value = '';
+              document.getElementById('add-event-message').textContent = 'Editing event ' + ev.id + '. Modify name, edit tiers below, or add new tiers.';
+              // render price tiers for editing
+              renderPriceRows(ev.prices || []);
+            });
+          });
+          container.querySelectorAll('.del-evt').forEach(btn => {
+            btn.addEventListener('click', async function() {
+              const id = this.getAttribute('data-id');
+              if (!confirm('Delete event #' + id + '? This cannot be undone.')) return;
+              try {
+                const res = await fetch('/events/delete', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id }) });
+                const data = await res.json();
+                if (!res.ok) { alert(data.error || 'Failed to delete'); return; }
+                loadEventsList();
+              } catch (e) { alert('Network error'); }
+            });
+          });
+        } catch (e) {
+          container.innerHTML = '<div style="padding:12px;color:#d00">Failed to load events.</div>';
+        }
+      }
+
+      // Price rows helpers
+      function renderPriceRows(prices) {
+        const container = document.getElementById('price-rows');
+        container.innerHTML = '';
+        (prices || []).forEach((p, idx) => addPriceRow(p));
+      }
+      function addPriceRow(p) {
+        const container = document.getElementById('price-rows');
+        const row = document.createElement('div');
+        row.className = 'price-row';
+        row.style.display = 'flex';
+        row.style.gap = '8px';
+        row.innerHTML = `
+          <input type="number" class="price-val" placeholder="price" style="width:140px;" value="${p && p.price ? p.price : ''}">
+          <input type="number" class="price-stock" placeholder="stock" style="width:120px;" value="${p && p.stock ? p.stock : ''}">
+          <button type="button" class="remove-price">Remove</button>
+        `;
+        container.appendChild(row);
+        row.querySelector('.remove-price').addEventListener('click', () => { row.remove(); });
+      }
+      document.getElementById('add-price-tier').addEventListener('click', function() { addPriceRow({}); });
+      function getPriceRowsData() {
+        const rows = Array.from(document.querySelectorAll('#price-rows .price-row'));
+        return rows.map(r => ({ price: Number(r.querySelector('.price-val').value || 0), stock: Number(r.querySelector('.price-stock').value || 0) })).filter(p => p.price > 0 && p.stock >= 0);
+      }
+
+      // Add / Update submit
       document.getElementById('add-event-form').addEventListener('submit', async function(e) {
         e.preventDefault();
-        const name = document.getElementById('event-name').value;
-        const price = document.getElementById('event-price').value;
-        const amount = document.getElementById('event-amount').value;
-        // Get userId from logged in user (simulate: use llm for now)
-        let userId = 2;
-        const res = await fetch('/events/add', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, price, amount, userId })
-        });
-        const data = await res.json();
+        const id = document.getElementById('event-id').value;
+        const name = document.getElementById('event-name').value.trim();
+        const quickPrice = document.getElementById('event-price').value;
+        const quickAmount = document.getElementById('event-amount').value;
         const msg = document.getElementById('add-event-message');
-        if (data.success) {
-          msg.style.color = '#080';
-          msg.textContent = data.message || 'Successfully added event';
-        } else {
-          msg.style.color = '#d00';
-          msg.textContent = data.error || 'Failed to add event.';
+        msg.textContent = '';
+        if (!name) { msg.style.color = '#d00'; msg.textContent = 'Event name is required.'; return; }
+        try {
+          let res;
+          const priceRows = getPriceRowsData();
+          if (id) {
+            // update: if priceRows provided, send them as explicit tiers; otherwise send quick price/amount to increment
+            if (priceRows && priceRows.length > 0) {
+              res = await fetch('/events/update', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, name, prices: priceRows }) });
+            } else {
+              res = await fetch('/events/update', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, name, price: quickPrice || undefined, amount: quickAmount || undefined }) });
+            }
+          } else {
+            // new event: prefer priceRows if provided
+            if (priceRows && priceRows.length > 0) {
+              // create event with first tier and ignore others for now (server supports one tier on add)
+              const first = priceRows[0];
+              res = await fetch('/events/add', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name, price: first.price, amount: first.stock, userId: 1 }) });
+            } else {
+              if (!quickPrice || !quickAmount) { msg.style.color = '#d00'; msg.textContent = 'Price and amount are required when adding a new event.'; return; }
+              res = await fetch('/events/add', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name, price: quickPrice, amount: quickAmount, userId: 1 }) });
+            }
+          }
+          const data = await res.json();
+          if (!res.ok) { msg.style.color = '#d00'; msg.textContent = data.error || 'Failed to save event.'; return; }
+          msg.style.color = '#080'; msg.textContent = data.message || 'Saved.';
+          // reset form
+          document.getElementById('event-id').value = '';
+          document.getElementById('event-name').value = '';
+          document.getElementById('event-price').value = '';
+          document.getElementById('event-amount').value = '';
+          document.getElementById('price-rows').innerHTML = '';
+          // refresh list and scroll to it
+          loadEventsList();
+        } catch (err) {
+          msg.style.color = '#d00'; msg.textContent = 'Network error while saving event.';
         }
       });
+
+      // Extra click handler on the Add/Update button to ensure submit is triggered and user sees feedback
+      (function attachAddButtonHelper(){
+        const addBtnEl = document.getElementById('add-event-submit');
+        if (!addBtnEl) return;
+        addBtnEl.addEventListener('click', function(ev) {
+          try {
+            const msg = document.getElementById('add-event-message');
+            if (msg) { msg.style.color = '#1976d2'; msg.textContent = 'Processing...'; }
+            const form = document.getElementById('add-event-form');
+            if (form) {
+              if (typeof form.requestSubmit === 'function') form.requestSubmit();
+              else form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+            }
+          } catch (e) { console.error('[EVENTS.UI] add button handler error', e); }
+        });
+      })();
+
+      // initial load
+      loadEventsList();
     }
         });
       });
@@ -710,10 +881,6 @@
     dropdownMenu.addEventListener('mouseleave', hideDropdown);
 
     // Dropdown menu actions
-    document.getElementById('edit-profile').addEventListener('click', function(e) {
-      e.preventDefault();
-      alert('Edit Profile clicked!');
-    });
     document.getElementById('logout').addEventListener('click', function(e) {
       e.preventDefault();
       // Hide app, show login
@@ -726,6 +893,8 @@
       registerForm.reset();
       loginMessage.textContent = '';
       registerMessage.textContent = '';
+      // clear stored user and role
+      try { localStorage.removeItem('clicketUser'); localStorage.removeItem('clicketRole'); localStorage.removeItem('rememberedUser'); } catch(e) {}
     });
 
     // Ticket section logic
@@ -805,20 +974,10 @@
             e.preventDefault();
             const event = eventSelect.value;
             const quantity = parseInt(quantityInput.value, 10) || 1;
-            // Purchase request
-            fetch('/tickets/purchase', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ eventId: event, quantity })
-            })
-            .then(res => res.json())
-            .then(data => {
-              if (data.success) {
-                showPaymentSection(event, quantity, eventNames, eventPriceLists, data.breakdown);
-              } else {
-                document.getElementById('ticket-message').textContent = data.error || 'Purchase failed.';
-              }
-            });
+            
+            // Redirect to payment.html with event and quantity
+            const eventId = event; // could be the event ID or name depending on your setup
+            window.location.href = `payment.html?event=${encodeURIComponent(eventId)}&quantity=${quantity}`;
           });
         })
         .catch(() => {
@@ -933,6 +1092,166 @@
         }).then(() => showAdminSection());
       }
     };
+    
+    // Purchase history section (Menu 3) with filters and export
+    async function showHistorySection() {
+      document.getElementById('content-area').innerHTML = `
+        <div class="center-container" style="max-width:1000px;">
+          <h2>Purchase History & Reports</h2>
+          <div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04)">
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;">
+              <div><label>Search</label><input id="ph-q" placeholder="search by event or id"></div>
+              <div><label>Event</label><input id="ph-event" placeholder="exact event name (optional)"></div>
+              <div><label>From</label><input id="ph-from" type="date"></div>
+              <div><label>To</label><input id="ph-to" type="date"></div>
+              <div><button id="ph-filter">Filter</button></div>
+              <div><button id="ph-export">Export CSV</button></div>
+              <div style="margin-left:auto;color:#666;font-size:0.9em;">Results will be shown below</div>
+            </div>
+          </div>
+          <div id="history-list" style="background:#fff;padding:12px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.04)">Loading...</div>
+        </div>
+      `;
+
+      function buildQueryParams() {
+        const q = document.getElementById('ph-q').value.trim();
+        const event = document.getElementById('ph-event').value.trim();
+        const fromDate = document.getElementById('ph-from').value;
+        const toDate = document.getElementById('ph-to').value;
+        const params = new URLSearchParams();
+        if (q) params.set('q', q);
+        if (event) params.set('event', event);
+        if (fromDate) params.set('from', new Date(fromDate).getTime());
+        if (toDate) params.set('to', new Date(toDate).getTime());
+        return params.toString();
+      }
+
+      async function loadHistory() {
+        const container = document.getElementById('history-list');
+        container.innerHTML = 'Loading...';
+        try {
+          const qstr = buildQueryParams();
+          const res = await fetch('/purchases' + (qstr ? ('?' + qstr) : ''));
+          if (!res.ok) throw new Error('Failed');
+          const purchases = await res.json();
+          if (!purchases || purchases.length === 0) {
+            container.innerHTML = '<div style="padding:16px;color:#666;">No purchases found.</div>';
+            return;
+          }
+          let html = '<div style="overflow:auto;max-height:600px;"><table style="width:100%;border-collapse:collapse;"><thead><tr style="background:#f4f6f8"><th style="padding:8px">ID</th><th style="padding:8px">When</th><th style="padding:8px">Event</th><th style="padding:8px">Qty</th><th style="padding:8px">Total</th><th style="padding:8px">Details</th><th style="padding:8px">Status</th></tr></thead><tbody>';
+          purchases.forEach(p => {
+            const date = new Date(p.timestamp || 0).toLocaleString();
+            const cancelled = p.cancelled ? true : false;
+            const cancelBtn = cancelled ? '<span style="color:#999;font-size:0.9em;">Cancelled</span>' : `<button onclick="cancelPurchase(${p.id})" style="color:#d00;">Cancel</button>`;
+            html += `<tr style="border-bottom:1px solid #eee"><td style="padding:8px">${p.id}</td><td style="padding:8px">${date}</td><td style="padding:8px">${p.eventName || p.eventId}</td><td style="padding:8px">${p.quantity}</td><td style="padding:8px">Rp ${Number(p.total || 0).toLocaleString('id-ID')}</td><td style="padding:8px">${(p.breakdown || []).map(b => b.count + '×Rp ' + b.price.toLocaleString('id-ID')).join('<br>')}</td><td style="padding:8px">${cancelBtn}</td></tr>`;
+          });
+          html += '</tbody></table></div>';
+          container.innerHTML = html;
+        } catch (e) {
+          container.innerHTML = '<div style="padding:16px;color:#d00;">Failed to load purchase history.</div>';
+        }
+      }
+
+      document.getElementById('ph-filter').addEventListener('click', function() { loadHistory(); });
+      document.getElementById('ph-export').addEventListener('click', function() {
+        const qstr = buildQueryParams();
+        const url = '/purchases/export' + (qstr ? ('?' + qstr) : '');
+        // open csv in new tab/window
+        window.open(url, '_blank');
+      });
+
+      // initial load
+      loadHistory();
+    }
+
+    // Cancel purchase helper called from history table
+    window.cancelPurchase = async function(id) {
+      if (!confirm('Cancel this purchase and restore stock?')) return;
+      try {
+        const res = await fetch('/purchases/cancel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || 'Failed to cancel purchase');
+          return;
+        }
+        // Refresh history view
+        showHistorySection();
+      } catch (err) {
+        alert('Network error while cancelling purchase');
+      }
+    };
+
+    // Settings section (Menu 5)
+    function showSettingsSection() {
+      const html = `
+        <div class="center-container" style="max-width:600px;">
+          <h2>Settings</h2>
+          <div style="background:#fff;padding:16px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.04)">
+            <h3 style="margin:8px 0;color:#444">Change Password</h3>
+            <div class="form-group"><label>Username</label>
+              <input type="text" id="setting-username" placeholder="username (if not logged in)">
+            </div>
+            <div class="form-group"><label>Current Password</label>
+              <input type="password" id="setting-current-password">
+            </div>
+            <div class="form-group"><label>New Password</label>
+              <input type="password" id="setting-new-password">
+            </div>
+            <div style="display:flex;gap:12px;margin-top:6px;">
+              <button id="change-password-btn" style="background:#d32;padding:10px;border-radius:6px;color:#fff;">Change Password</button>
+            </div>
+            <div id="change-password-message" style="margin-top:10px;"></div>
+          </div>
+        </div>`;
+      document.getElementById('content-area').innerHTML = html;
+      // prefill username if available
+      try { const cu = localStorage.getItem('clicketUser'); if (cu) document.getElementById('setting-username').value = cu; } catch(e) {}
+
+      // Change password handler
+      document.getElementById('change-password-btn').addEventListener('click', async function() {
+        const usernameInput = document.getElementById('setting-username').value.trim();
+        const username = usernameInput || (localStorage.getItem('clicketUser') || '');
+        const current = document.getElementById('setting-current-password').value;
+        const nw = document.getElementById('setting-new-password').value;
+        const msgEl = document.getElementById('change-password-message');
+        msgEl.textContent = '';
+        if (!username || !current || !nw) {
+          msgEl.style.color = '#d00'; msgEl.textContent = 'Please provide username, current and new password.'; return;
+        }
+        try {
+          const res = await fetch('/users/change-password', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, currentPassword: current, newPassword: nw })
+          });
+          const data = await res.json();
+          if (!res.ok) { msgEl.style.color = '#d00'; msgEl.textContent = data.error || 'Failed to change password.'; return; }
+          msgEl.style.color = '#080'; msgEl.textContent = data.message || 'Password changed.';
+          // clear sensitive inputs
+          document.getElementById('setting-current-password').value = '';
+          document.getElementById('setting-new-password').value = '';
+          // clear stored user info and send user back to login so they can re-authenticate
+          try { localStorage.removeItem('clicketUser'); localStorage.removeItem('rememberedUser'); } catch(e) {}
+          setTimeout(() => {
+            // hide app and show auth/login UI
+            appLayout.style.display = 'none';
+            authSection.style.display = 'flex';
+            loginSection.style.display = 'block';
+            registerSection.style.display = 'none';
+            // reset forms and show a helpful login message
+            loginForm.reset();
+            registerForm.reset();
+            loginMessage.style.color = '#080';
+            loginMessage.textContent = 'Password changed — please login with your new password.';
+          }, 900);
+        } catch (err) {
+          msgEl.style.color = '#d00'; msgEl.textContent = 'Network error while changing password.';
+        }
+      });
+    }
   </script>
 </body>
   

@@ -2,132 +2,145 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Buy Ticket</title>
-
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <title>Buy Ticket</title>
-    <style>
-      body {
-        min-height: 100vh;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #f7f7f7;
-        font-family: Arial, sans-serif;
-      }
-      .grid-container {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: 1fr 1fr;
-        gap: 32px;
-        width: 520px;
-        height: 420px;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 2px 16px rgba(0,0,0,0.08);
-        padding: 32px;
-      }
-      .event-block {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        border-radius: 10px;
-        background: #e3eafc;
-        box-shadow: 0 1px 6px rgba(0,0,0,0.06);
-        cursor: pointer;
-        transition: background 0.2s;
-        font-size: 1.2em;
-        font-weight: bold;
-        border: 2px solid #1976d2;
-        min-height: 120px;
-      }
-      .event-block:hover {
-        background: #bbdefb;
-      }
-      .event-title {
-        margin-bottom: 8px;
-      }
-      .event-price {
-        font-size: 0.95em;
-        color: #1976d2;
-      }
-      #ticket-message {
-        text-align: center;
-        margin-top: 24px;
-        color: #e53935;
-        font-weight: bold;
-      }
-      #back-event {
-        margin-top: 24px;
-        display: block;
-        width: 100%;
-        padding: 10px;
-        background: #e53935;
-        color: #fff;
-        border: none;
-        border-radius: 6px;
-        font-size: 1em;
-        cursor: pointer;
-      }
-      #back-event:hover {
-        background: #b71c1c;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="grid-container">
-      <div class="event-block" id="theater">
-        <div class="event-title">Theater</div>
-        <div class="event-price">Rp 750.000</div>
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f7f7f7;
+      font-family: Arial, sans-serif;
+    }
+    .grid-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 24px;
+      width: 100%;
+      max-width: 980px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    .event-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: #e3eafc;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+      transition: background 0.2s;
+      font-size: 1.2em;
+      font-weight: bold;
+      border: 2px solid #1976d2;
+      min-height: 120px;
+      padding: 12px;
+    }
+    .event-block:hover {
+      background: #bbdefb;
+    }
+    .event-title { margin-bottom: 8px; }
+    .event-price { font-size: 0.95em; color: #1976d2; margin-bottom: 12px; }
+    .quantity-control { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .quantity-control input { width: 50px; padding: 4px; border: 1px solid #1976d2; border-radius: 4px; text-align: center; }
+    .buy-now { padding: 8px 12px; border-radius: 6px; border: none; background: #1976d2; color: #fff; cursor: pointer; font-weight: 600; transition: background 0.2s; }
+    .buy-now:hover { background: #1565c0; }
+    #ticket-message { text-align: center; margin-top: 24px; color: #e53935; font-weight: bold; }
+    #back-event { margin-top: 24px; display: block; width: 100%; padding: 10px; background: #e53935; color: #fff; border: none; border-radius: 6px; font-size: 1em; cursor: pointer; }
+    #back-event:hover { background: #b71c1c; }
+    
+    /* Responsive */
+    .center-container { max-width: 96vw; }
+    @media (max-width: 900px){ .grid-container{ grid-template-columns: repeat(2,1fr);} }
+    @media (max-width: 640px) {
+      .grid-container{ grid-template-columns: 1fr; gap:12px; padding:16px; }
+      .event-block{ padding:12px; }
+      .buy-now{ width:100%; }
+    }
+    @media (max-width: 420px) {
+      .event-title { font-size: 1em; }
+      .event-price { font-size: 0.9em; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-container">
+    <div class="event-block" id="theater">
+      <div class="event-title">Theater</div>
+      <div class="event-price">Rp 750.000</div>
+      <div class="quantity-control">
+        <label for="qty-theater">Qty:</label>
+        <input type="number" id="qty-theater" class="qty-input" value="1" min="1" max="10">
       </div>
-      <div class="event-block" id="concert">
-        <div class="event-title">Concert</div>
-        <div class="event-price">Rp 1.000.000</div>
-      </div>
-      <div class="event-block" id="f1">
-        <div class="event-title">F1</div>
-        <div class="event-price">Rp 2.000.000</div>
-      </div>
-      <div class="event-block" id="vct">
-        <div class="event-title">VCT Valorant</div>
-        <div class="event-price">Rp 1.500.000</div>
-      </div>
+      <button class="buy-now" data-event="theater">Buy Now</button>
     </div>
-    <div id="ticket-message"></div>
-    <button id="back-event">Back to Event</button>
-    <script>
-      const eventPrices = {
-        theater: 750000,
-        concert: 1000000,
-        f1: 2000000,
-        vct: 1500000
-      };
-      const eventNames = {
-        theater: 'Theater',
-        concert: 'Concert',
-        f1: 'F1',
-        vct: 'VCT Valorant'
-      };
-      document.querySelectorAll('.event-block').forEach(block => {
-        block.onclick = function() {
-          const id = block.id;
-          let quantity = prompt(`How many tickets for ${eventNames[id]}?`, "1");
-          quantity = parseInt(quantity, 10);
-          if (!quantity || quantity < 1) {
-            document.getElementById('ticket-message').textContent = 'Please enter a valid quantity.';
-            return;
-          }
-          window.location.href = `/payment.html?event=${id}&quantity=${quantity}`;
-        };
+    <div class="event-block" id="concert">
+      <div class="event-title">Concert</div>
+      <div class="event-price">Rp 1.000.000</div>
+      <div class="quantity-control">
+        <label for="qty-concert">Qty:</label>
+        <input type="number" id="qty-concert" class="qty-input" value="1" min="1" max="10">
+      </div>
+      <button class="buy-now" data-event="concert">Buy Now</button>
+    </div>
+    <div class="event-block" id="f1">
+      <div class="event-title">F1</div>
+      <div class="event-price">Rp 2.000.000</div>
+      <div class="quantity-control">
+        <label for="qty-f1">Qty:</label>
+        <input type="number" id="qty-f1" class="qty-input" value="1" min="1" max="10">
+      </div>
+      <button class="buy-now" data-event="f1">Buy Now</button>
+    </div>
+    <div class="event-block" id="vct">
+      <div class="event-title">VCT Valorant</div>
+      <div class="event-price">Rp 1.500.000</div>
+      <div class="quantity-control">
+        <label for="qty-vct">Qty:</label>
+        <input type="number" id="qty-vct" class="qty-input" value="1" min="1" max="10">
+      </div>
+      <button class="buy-now" data-event="vct">Buy Now</button>
+    </div>
+  </div>
+  <div id="ticket-message"></div>
+  <button id="back-event">← Back to Events</button>
+  <script>
+    const eventNames = { theater: 'Theater', concert: 'Concert', f1: 'F1', vct: 'VCT Valorant' };
+
+    console.log('Ticket page script loaded');
+
+    // Buy Now buttons - redirect to payment with selected quantity
+    document.querySelectorAll('.buy-now').forEach(btn => {
+      btn.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        const event = btn.getAttribute('data-event');
+        const qtyInput = document.getElementById('qty-' + event);
+        const quantity = parseInt(qtyInput.value, 10) || 1;
+
+        console.log('Buy Now clicked:', { event, quantity, qtyId: 'qty-' + event });
+
+        if (quantity < 1 || quantity > 10) {
+          document.getElementById('ticket-message').textContent = 'Please enter a quantity between 1 and 10.';
+          return;
+        }
+
+        // Redirect to payment page with event and quantity
+        const paymentUrl = `payment.html?event=${encodeURIComponent(event)}&quantity=${quantity}`;
+        console.log('Redirecting to:', paymentUrl);
+        window.location.href = paymentUrl;
       });
-      document.getElementById('back-event').onclick = function() {
-        window.location.href = '/event.html';
-      };
-    </script>
-  </body>
-  </html>
+    });
+
+    // Back button
+    document.getElementById('back-event').addEventListener('click', function() {
+      window.location.href = 'event.html';
+    });
+  </script>
+</body>
+</html>

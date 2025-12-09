@@ -38,5 +38,13 @@
     "email": "ryan@gmail.com",
     "password": "$2b$10$6OcnEVH3HGWpXY1sWQtMIO5AkUcyrNLl7wDw.Z/66kFyvWuNMI7Bi",
     "role": "user"
+  },
+  {
+    "id": 6,
+    "fullname": "Ryan Fernando",
+    "username": "Ryann",
+    "email": "ryann@gmail.com",
+    "password": "$2b$10$jl1XYKLJhz4P.c3klr8SB.2dygMhULugtVSw9eqvww5Sbt/14xofi",
+    "role": "user"
   }
 ]
